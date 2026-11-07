@@ -33,12 +33,18 @@ describe("login", () => {
     expect(String(init.body)).toBe("username=rahul&password=demo123");
   });
 
-  it("sends a manager to the manager home", async () => {
-    mockFetch(() => json({ access_token: "tok", token_type: "bearer", role: "manager", language: "en" }));
+  it("sends a manager to the manager dashboard", async () => {
+    const DASH = {
+      open_loans: 1, overdue_amount: "1000.00", broken_promises: 0, open_promises: 0, snapshot_date: null,
+      roll_rate: { cohort: 0, rolled: 0, rate: null }, by_officer: [],
+    };
+    mockFetch((u) => u.endsWith("/auth/login")
+      ? json({ access_token: "tok", token_type: "bearer", role: "manager", language: "en" })
+      : json(DASH));
     const user = userEvent.setup();
     renderApp("/login");
     await fillAndSubmit(user, "manager_central");
-    expect(await screen.findByRole("heading", { name: "Branch overview" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
   });
 
   it("shows a clear message for a wrong password and stays on the page", async () => {
