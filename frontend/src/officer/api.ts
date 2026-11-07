@@ -1,7 +1,7 @@
 import { api } from "../api/client";
 
 export type Band = "high" | "medium" | "low";
-export type LoanRow = { loan_id: string; borrower_name: string; dpd: number; band: Band; score: number };
+export type LoanRow = { loan_id: string; borrower_name: string; outstanding: string; dpd: number; band: Band; score: number };
 export type Reason = { code: string; text: string; contribution: number };
 export type Promise_ = { state: "open" | "kept" | "broken"; promise_date: string; amount: string };
 export type LoanDetail = {
