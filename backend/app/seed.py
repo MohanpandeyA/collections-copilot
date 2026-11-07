@@ -13,6 +13,7 @@ from sqlalchemy import text
 
 from app import models as m
 from app.core.database import Base, SessionLocal, engine
+from app.services.scoring_service import score_loans
 
 DEMO_PASSWORD = "demo123"  # demo accounts only, shown in deployment.md
 TODAY = date(2026, 11, 7)
@@ -128,6 +129,8 @@ def main():
         db.add(m.Promise(loan_id="LN-11930", outcome_id=uuid.UUID("00000000-0000-4000-8000-000000000001"),
                          promise_date=date(2026, 10, 31), amount=Decimal("50000"), state="broken"))
         db.add(m.Promise(loan_id="LN-10293", promise_date=date(2026, 11, 5), amount=Decimal("100000"), state="open"))
+        db.flush()
+        score_loans(db, [r[0] for r in loan_rows], TODAY)
         db.commit()
         print(f"Seeded: {len(BRANCHES)} branches, {len(users)} users, {len(loan_rows)} loans, {len(TEMPLATES)} templates")
     finally:

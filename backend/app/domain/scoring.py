@@ -84,3 +84,12 @@ def score_loan(f: LoanFacts) -> ScoreResult:
     score = round(sum(r.contribution for r in reasons), 1)
     top3 = sorted(reasons, key=lambda r: r.contribution, reverse=True)[:3]
     return ScoreResult(score=score, reasons=top3)
+
+
+def band(score: float) -> str:
+    """Status-dot colour for the officer list: high is red, medium amber, low green."""
+    if score >= 60:
+        return "high"
+    if score >= 40:
+        return "medium"
+    return "low"
