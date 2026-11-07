@@ -130,6 +130,12 @@ def main():
                          promise_date=date(2026, 10, 31), amount=Decimal("50000"), state="broken"))
         db.add(m.Promise(loan_id="LN-10293", promise_date=date(2026, 11, 5), amount=Decimal("100000"), state="open"))
         db.flush()
+        # Month-start DPD, the cohort base for roll rates. Unpaid loans age one day per day.
+        month_start = TODAY.replace(day=1)
+        for lid, _name, _phone, _pin, branch_id, _amt, dpd, _lp, _officer in loan_rows:
+            db.add(m.LoanSnapshot(loan_id=lid, branch_id=branch_id, snapshot_date=month_start,
+                                  dpd=max(dpd - (TODAY - month_start).days, 0)))
+        db.flush()
         score_loans(db, [r[0] for r in loan_rows], TODAY)
         db.commit()
         print(f"Seeded: {len(BRANCHES)} branches, {len(users)} users, {len(loan_rows)} loans, {len(TEMPLATES)} templates")
