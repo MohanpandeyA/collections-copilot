@@ -7,6 +7,7 @@ from pydantic import BaseModel
 class LoanRowOut(BaseModel):
     loan_id: str
     borrower_name: str
+    outstanding: Decimal
     dpd: int
     band: str
     score: float

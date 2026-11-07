@@ -27,7 +27,8 @@ def my_loans(db: Session, officer: User) -> list[LoanRowOut]:
         snap = scores.get(loan.loan_id)
         score = snap.score if snap else 0.0
         rows.append((rank, score, LoanRowOut(
-            loan_id=loan.loan_id, borrower_name=loan.borrower_name, dpd=loan.dpd,
+            loan_id=loan.loan_id, borrower_name=loan.borrower_name,
+            outstanding=loan.outstanding, dpd=loan.dpd,
             band=band(score), score=score)))
     # manager's manual order first (lowest rank number), then highest score
     rows.sort(key=lambda r: (r[0] is None, r[0] if r[0] is not None else 0, -r[1]))

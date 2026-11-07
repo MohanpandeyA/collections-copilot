@@ -17,7 +17,7 @@ def test_list_row_has_name_dpd_band_and_no_phone(client, officer):
     rows = client.get("/my/loans", headers=officer).json()
     assert rows
     row = rows[0]
-    assert set(row) == {"loan_id", "borrower_name", "dpd", "band", "score"}
+    assert set(row) == {"loan_id", "borrower_name", "outstanding", "dpd", "band", "score"}  # still no phone
     assert row["band"] in {"high", "medium", "low"}
 
 
@@ -49,3 +49,9 @@ def test_broken_promise_loan_shows_broken_reason(client):
     d = client.get("/my/loans/LN-11930", headers=h).json()
     assert d["promise"]["state"] == "broken"
     assert any(r["code"] == "promise" for r in d["reasons"])
+
+
+
+def test_list_rows_carry_the_outstanding_amount(client, officer):
+    rows = client.get("/my/loans", headers=officer).json()
+    assert all(float(r["outstanding"]) > 0 for r in rows)
