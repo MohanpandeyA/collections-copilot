@@ -1,9 +1,19 @@
 import { Link, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
 import { useT } from "../i18n/useT";
+import { OutboxProvider } from "../outbox/OutboxContext";
+import SyncBar from "./SyncBar";
 import "./Officer.css";
 
 export default function OfficerLayout() {
+  return (
+    <OutboxProvider>
+      <Shell />
+    </OutboxProvider>
+  );
+}
+
+function Shell() {
   const { signOut } = useAuth();
   const { t, lang, setLang } = useT();
   return (
@@ -16,6 +26,7 @@ export default function OfficerLayout() {
           <button className="btn btn-quiet t-label" onClick={signOut}>{t("signOut")}</button>
         </div>
       </header>
+      <SyncBar />
       <main><Outlet /></main>
     </div>
   );

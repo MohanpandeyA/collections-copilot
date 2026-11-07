@@ -7,6 +7,7 @@ import { ErrorState, Page, SkeletonRows } from "../components/States";
 import { useT } from "../i18n/useT";
 import { checkCall, fetchLoan, openDialer } from "./api";
 import { BAND_LABEL } from "./LoanList";
+import OutcomePanel from "./OutcomePanel";
 
 const inr = (v: string) => `₹${Number(v).toLocaleString("en-IN")}`;
 
@@ -65,6 +66,7 @@ export default function LoanDetail() {
               <h2 className="t-label" style={{ marginBottom: "var(--s-8)" }}>{t("whyRank")}</h2>
               <ol className="reasons t-body">{d.reasons.map((r) => <li key={r.code}>{r.text}</li>)}</ol>
             </section>
+            <OutcomePanel loanId={d.loan_id} />
             <div className="actions">
               <button className="btn" onClick={() => onCall(d.phone)} disabled={calling}>
                 {calling ? t("calling") : t("call")}
