@@ -9,7 +9,7 @@ import httpx
 
 from app.core.config import settings
 
-TIMEOUT_SECONDS = 25
+TIMEOUT_SECONDS = 45  # 25 s is too tight when behind a proxy; hosting env will be faster
 URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
 Llm = Callable[[str], str]
