@@ -53,3 +53,10 @@ def test_same_inputs_give_same_score():
 def test_weights_sum_to_one():
     from app.domain.scoring import WEIGHTS
     assert abs(sum(WEIGHTS.values()) - 1.0) < 1e-9
+
+
+def test_band_thresholds():
+    from app.domain.scoring import band
+    assert band(80) == "high" and band(60) == "high"
+    assert band(59.9) == "medium" and band(40) == "medium"
+    assert band(39.9) == "low" and band(0) == "low"
