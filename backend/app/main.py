@@ -4,7 +4,7 @@ from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import engine
-from app.routers import auth, manager, officer
+from app.routers import auth, manager, officer, outcomes
 
 app = FastAPI(title="Collections Copilot API")
 
@@ -19,6 +19,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(manager.router)
 app.include_router(officer.router)
+app.include_router(outcomes.router)
 
 
 @app.get("/health")
