@@ -89,13 +89,13 @@ export function StackBar({ parts, title }: { parts: Slice[]; title: string }) {
 }
 
 /** Small progress ring, used for the roll rate. */
-export function Ring({ percent, label, caption }: { percent: number | null; label: string; caption: string }) {
+export function Ring({ percent, label, caption, color, small }: { percent: number | null; label: string; caption: string; color?: string; small?: boolean }) {
   const R = 52, C = 2 * Math.PI * R;
   const p = percent === null ? 0 : Math.min(Math.max(percent, 0), 100);
   return (
-    <svg viewBox="0 0 140 140" role="img" aria-label={`${caption}: ${label}`} className="ring chart-in">
+    <svg viewBox="0 0 140 140" role="img" aria-label={`${caption}: ${label}`} className={`ring chart-in${small ? " ring-sm" : ""}`}>
       <circle cx="70" cy="70" r={R} fill="none" stroke="var(--surface-sunk)" strokeWidth="14" />
-      <circle cx="70" cy="70" r={R} fill="none" stroke={p >= 15 ? "var(--band-high)" : "var(--accent)"} strokeWidth="14" strokeLinecap="round"
+      <circle cx="70" cy="70" r={R} fill="none" stroke={color ?? (p >= 15 ? "var(--band-high)" : "var(--accent)")} strokeWidth="14" strokeLinecap="round"
         strokeDasharray={`${(p / 100) * C} ${C}`} transform="rotate(-90 70 70)" />
       <text x="70" y="76" textAnchor="middle" className="chart-ring-n">{label}</text>
     </svg>

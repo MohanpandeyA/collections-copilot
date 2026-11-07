@@ -3,13 +3,13 @@ import { useResource } from "../api/useResource";
 import { Bars, Donut, Ring, StackBar } from "../charts/Charts";
 import { Icon, type IconName } from "../components/Icon";
 import { ErrorState, SkeletonRows } from "../components/States";
+import { inr, lakh } from "../format";
 import { useT } from "../i18n/useT";
 import { fetchActivity, fetchDashboard, fetchManagerLoans, fetchPromises } from "./api";
 import { bandCounts, overdueByAge, promiseCounts, resultMix, visitsByDay } from "./insights";
 import "../charts/Charts.css";
 
-export const inr = (v: string | number) => `₹${Number(v).toLocaleString("en-IN")}`;
-const lakh = (v: number) => (v >= 1e7 ? `₹${(v / 1e7).toFixed(1)} Cr` : v >= 1e5 ? `₹${(v / 1e5).toFixed(1)} L` : inr(v));
+export { inr };
 const pct = (r: number | null) => (r === null ? "–" : `${r}%`);
 
 function Stat({ icon, label, value }: { icon: IconName; label: string; value: string | number }) {

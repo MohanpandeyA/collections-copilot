@@ -18,6 +18,8 @@
   /* Status: always shown with a text label as well as colour */
   --danger: #b42318;
   --danger-soft: #fdeceb;
+  --ok-soft: #e3f4ea;
+  --ok-text: #1d6b3b; /* 5.6:1 on --ok-soft */
   --band-high: #d92d20;
   --band-medium: #f59e0b;
   --band-low: #2f9e5b;
