@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/AuthContext";
+import { Icon } from "../components/Icon";
 import { useT } from "../i18n/useT";
 import { createDraft, sendDraft, type Draft } from "./api";
 
@@ -41,9 +42,9 @@ export default function ReminderPanel({ loanId }: { loanId: string }) {
       <h2 id="rem-h" className="body-5">{t("reminderTitle")}</h2>
       <div className="outcome-grid">
         <button className="btn btn-quiet" disabled={busy !== null} onClick={() => make(false)}>
-          {busy === "draft" ? t("drafting") : t("draftTemplate")}
+          <Icon name="chat-text" />{busy === "draft" ? t("drafting") : t("draftTemplate")}
         </button>
-        <button className="btn btn-quiet" disabled={busy !== null} onClick={() => make(true)}>{t("draftAi")}</button>
+        <button className="btn btn-quiet" disabled={busy !== null} onClick={() => make(true)}><Icon name="sparkle" />{t("draftAi")}</button>
       </div>
       {draft && (
         <div className="card draft">

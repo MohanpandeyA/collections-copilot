@@ -1,4 +1,5 @@
 import { Link, Outlet } from "react-router-dom";
+import { Icon } from "../components/Icon";
 import { useAuth } from "../auth/AuthContext";
 import { useT } from "../i18n/useT";
 import { OutboxProvider } from "../outbox/OutboxContext";
@@ -19,11 +20,11 @@ function Shell() {
   return (
     <div className="shell">
       <header className="topbar">
-        <Link to="/officer" className="title-2" style={{ textDecoration: "none", color: "inherit" }}>{t("appName")}</Link>
+        <Link to="/officer" className="brand title-2"><span className="brand-mark"><Icon name="hand-coins" size={20} /></span>{t("appName")}</Link>
         <div className="topbar-actions">
           <button className="btn btn-quiet body-5" onClick={() => setLang(lang === "en" ? "hi" : "en")}
-            aria-label={t("language")}>{lang === "en" ? "हिन्दी" : "English"}</button>
-          <button className="btn btn-quiet body-5" onClick={signOut}>{t("signOut")}</button>
+            aria-label={t("language")}><Icon name="translate" size={18} />{lang === "en" ? "हिन्दी" : "English"}</button>
+          <button className="btn btn-quiet body-5" onClick={signOut}><Icon name="sign-out" size={18} /><span className="hide-sm">{t("signOut")}</span></button>
         </div>
       </header>
       <SyncBar />

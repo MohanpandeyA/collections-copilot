@@ -5,9 +5,13 @@ import { saveSession } from "../auth/session";
 import * as officerApi from "../officer/api";
 import { json, mockFetch, renderApp } from "./render";
 
+const LIST_FIXTURE = [
+  { loan_id: "L-1", borrower_name: "Meena Devi", outstanding: "45000.00", dpd: 62, band: "high", score: 81 },
+  { loan_id: "L-2", borrower_name: "Ravi Kumar", outstanding: "12000.00", dpd: 18, band: "low", score: 22 },
+];
 const LOANS = [
-  { loan_id: "L-1", borrower_name: "Meena Devi", dpd: 62, band: "high", score: 81 },
-  { loan_id: "L-2", borrower_name: "Ravi Kumar", dpd: 18, band: "low", score: 22 },
+  { loan_id: "L-1", borrower_name: "Meena Devi", outstanding: "45000.00", dpd: 62, band: "high", score: 81 },
+  { loan_id: "L-2", borrower_name: "Ravi Kumar", outstanding: "12000.00", dpd: 18, band: "low", score: 22 },
 ];
 const DETAIL = {
   loan_id: "L-1", borrower_name: "Meena Devi", phone: "9876500001", pincode: "110001",
@@ -82,7 +86,7 @@ describe("loan detail", () => {
     expect(screen.getByText("₹45,000")).toBeInTheDocument();
     expect(screen.getByText("No payment on record")).toBeInTheDocument();
     expect(screen.getByText("Broken promise")).toBeInTheDocument();
-    expect(screen.getByText("62 days overdue", { selector: "li" })).toBeInTheDocument();
+    expect(screen.getByText("62 days overdue", { selector: "li > span" })).toBeInTheDocument();
   });
 
   it("checks the server, then dials, when allowed", async () => {
@@ -119,5 +123,44 @@ describe("loan detail", () => {
     mockFetch(() => json({ detail: "Not found" }, 404));
     renderApp("/officer/loans/L-9");
     expect(await screen.findByText("This loan is not on your list")).toBeInTheDocument();
+  });
+});
+
+
+describe("officer list filters", () => {
+  const rows = () => mockFetch((u) => (u.includes("/my/loans") ? json(LIST_FIXTURE) : json([])));
+
+  it("shows the total to recover and each row's amount", async () => {
+    rows();
+    renderApp("/officer");
+    expect(await screen.findByRole("region", { name: "To recover" })).toHaveTextContent("₹57,000");
+    const row = await screen.findByRole("link", { name: /Meena Devi/ });
+    expect(within(row).getByText("₹45,000")).toBeInTheDocument();
+  });
+
+  it("filters by priority chip and clears again", async () => {
+    rows();
+    const user = userEvent.setup();
+    renderApp("/officer");
+    await screen.findByText("Ravi Kumar");
+    await user.click(screen.getByRole("button", { name: /^High 1/ }));
+    expect(screen.queryByText("Ravi Kumar")).not.toBeInTheDocument();
+    expect(screen.getByText("Meena Devi")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /^All 2/ }));
+    expect(screen.getByText("Ravi Kumar")).toBeInTheDocument();
+  });
+
+  it("searches by name and offers a way out when nothing matches", async () => {
+    rows();
+    const user = userEvent.setup();
+    renderApp("/officer");
+    await screen.findByText("Ravi Kumar");
+    await user.type(screen.getByRole("searchbox"), "ravi");
+    expect(screen.queryByText("Meena Devi")).not.toBeInTheDocument();
+    await user.clear(screen.getByRole("searchbox"));
+    await user.type(screen.getByRole("searchbox"), "zzz");
+    expect(await screen.findByText("No loans match")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(await screen.findByText("Ravi Kumar")).toBeInTheDocument();
   });
 });

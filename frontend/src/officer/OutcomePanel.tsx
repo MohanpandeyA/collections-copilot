@@ -2,14 +2,15 @@ import { useState, type FormEvent } from "react";
 import { currentPosition } from "../outbox/geo";
 import { useOutbox } from "../outbox/OutboxContext";
 import type { OutcomeResult } from "../outbox/types";
+import { Icon, type IconName } from "../components/Icon";
 import { useT } from "../i18n/useT";
 import type { StringKey } from "../i18n/strings";
 
-const CHOICES: { result: OutcomeResult; label: StringKey }[] = [
-  { result: "paid", label: "outPaid" },
-  { result: "promise", label: "outPromise" },
-  { result: "unreachable", label: "outUnreachable" },
-  { result: "dispute", label: "outDispute" },
+const CHOICES: { result: OutcomeResult; label: StringKey; icon: IconName }[] = [
+  { result: "paid", label: "outPaid", icon: "check-circle" },
+  { result: "promise", label: "outPromise", icon: "handshake" },
+  { result: "unreachable", label: "outUnreachable", icon: "phone-slash" },
+  { result: "dispute", label: "outDispute", icon: "scales" },
 ];
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
@@ -52,8 +53,8 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
       {!asking && (
         <div className="outcome-grid">
           {CHOICES.map((c) => (
-            <button key={c.result} className="btn btn-quiet" disabled={saving} onClick={() => choose(c.result)}>
-              {t(c.label)}
+            <button key={c.result} className={`btn btn-tint tint-${c.result}`} disabled={saving} onClick={() => choose(c.result)}>
+              <Icon name={c.icon} />{t(c.label)}
             </button>
           ))}
         </div>
