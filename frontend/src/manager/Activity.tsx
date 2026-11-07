@@ -14,7 +14,7 @@ export default function Activity() {
   const { state, reload } = useResource(fetchActivity);
   return (
     <>
-      <h1 className="t-title">{t("navActivity")}</h1>
+      <h1 className="heading-5">{t("navActivity")}</h1>
       {state.status === "loading" && <SkeletonRows />}
       {state.status === "error" && <ErrorState onRetry={reload} />}
       {state.status === "ready" && state.data.length === 0 && <EmptyState title={t("noActivity")} body={t("noActivityBody")} />}
@@ -25,7 +25,7 @@ export default function Activity() {
             <tbody>{state.data.map((a) => (
               <tr key={a.client_id}>
                 <td>{when(a.occurred_at)}</td><td>{a.officer_name}</td><td>{a.borrower_name}</td>
-                <td>{RESULT[a.result] ? t(RESULT[a.result]) : a.result}{a.note && <span className="t-caption"> · {a.note}</span>}</td>
+                <td>{RESULT[a.result] ? t(RESULT[a.result]) : a.result}{a.note && <span className="caption-5"> · {a.note}</span>}</td>
               </tr>
             ))}</tbody>
           </table>

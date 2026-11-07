@@ -15,14 +15,26 @@ body {
 button, input, select, textarea { font: inherit; color: inherit; }
 h1, h2, h3, p { margin: 0; }
 a { color: var(--accent-text); }
+.skip { position: absolute; left: var(--s-16); top: -64px; z-index: 10; padding: var(--s-8) var(--s-16); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); transition: transform var(--t-base) var(--ease); }
+.skip:focus { transform: translateY(80px); }
 em, i, cite { font-style: normal; }
 
-/* Named text styles. No weight above 600, no italics. */
-.t-title { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em; }
-.t-heading { font-size: 18px; line-height: 24px; font-weight: 600; }
-.t-body { font-size: 16px; line-height: 24px; font-weight: 400; }
-.t-label { font-size: 14px; line-height: 20px; font-weight: 500; }
-.t-caption { font-size: 12px; line-height: 16px; font-weight: 400; color: var(--ink-soft); }
+/* Named text styles from the design skill. Sizes sit on the Tailwind scale, weights stop at 600, no italics. */
+.heading-3 { font-size: 36px; line-height: 40px; font-weight: 600; letter-spacing: -0.01em; }
+.heading-4 { font-size: 30px; line-height: 36px; font-weight: 600; letter-spacing: -0.01em; }
+.heading-5 { font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em; }
+.heading-6 { font-size: 20px; line-height: 28px; font-weight: 600; }
+.title-2 { font-size: 18px; line-height: 28px; font-weight: 500; }
+.title-3 { font-size: 16px; line-height: 24px; font-weight: 500; }
+.title-4 { font-size: 14px; line-height: 20px; font-weight: 500; }
+.body-2 { font-size: 16px; line-height: 24px; font-weight: 500; }
+.body-3 { font-size: 16px; line-height: 24px; font-weight: 400; }
+.body-5 { font-size: 14px; line-height: 20px; font-weight: 500; }
+.body-6 { font-size: 14px; line-height: 20px; font-weight: 400; }
+.caption-3 { font-size: 12px; line-height: 16px; font-weight: 600; }
+.caption-5 { font-size: 12px; line-height: 16px; font-weight: 400; color: var(--ink-soft); }
+h1, h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
 
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: var(--r-sm); }
 

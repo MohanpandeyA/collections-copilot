@@ -46,8 +46,9 @@
   --shadow-card: 0 1px 2px rgba(43, 33, 24, 0.06), 0 4px 16px rgba(43, 33, 24, 0.05);
 
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --t-fast: 150ms;
-  --t-base: 250ms;
+  --t-fast: 200ms; /* skill: never shorter than 200ms */
+  --t-base: 300ms;
+  --t-layout: 500ms;
 
   --tap: 48px; /* minimum touch target */
   --font: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;

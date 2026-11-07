@@ -48,7 +48,7 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
 
   return (
     <section aria-labelledby="log-h" className="outcome">
-      <h2 id="log-h" className="t-label">{t("logOutcome")}</h2>
+      <h2 id="log-h" className="body-5">{t("logOutcome")}</h2>
       {!asking && (
         <div className="outcome-grid">
           {CHOICES.map((c) => (
@@ -60,16 +60,16 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
       )}
       {asking && (
         <form className="outcome-form" onSubmit={submitPromise} noValidate>
-          <label className="t-label" htmlFor="p-date">{t("promiseDate")}</label>
+          <label className="body-5" htmlFor="p-date">{t("promiseDate")}</label>
           <input id="p-date" className="input" type="date" min={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} />
-          <label className="t-label" htmlFor="p-amt">{t("promiseAmount")}</label>
+          <label className="body-5" htmlFor="p-amt">{t("promiseAmount")}</label>
           <input id="p-amt" className="input" type="number" inputMode="decimal" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          {error && <p className="alert-error t-label" role="alert">{t("needDate")}</p>}
+          {error && <p className="alert-error body-5" role="alert">{t("needDate")}</p>}
           <button className="btn" type="submit" disabled={saving}>{t("saveOutcome")}</button>
           <button className="btn btn-quiet" type="button" onClick={() => { setAsking(false); setError(false); }}>{t("cancel")}</button>
         </form>
       )}
-      {saved && <p className="t-label" role="status" style={{ color: "var(--accent-text)" }}>{t("savedLocal")}</p>}
+      {saved && <p className="body-5" role="status" style={{ color: "var(--accent-text)" }}>{t("savedLocal")}</p>}
     </section>
   );
 }

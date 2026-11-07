@@ -38,7 +38,7 @@ export default function ReminderPanel({ loanId }: { loanId: string }) {
 
   return (
     <section aria-labelledby="rem-h" className="outcome">
-      <h2 id="rem-h" className="t-label">{t("reminderTitle")}</h2>
+      <h2 id="rem-h" className="body-5">{t("reminderTitle")}</h2>
       <div className="outcome-grid">
         <button className="btn btn-quiet" disabled={busy !== null} onClick={() => make(false)}>
           {busy === "draft" ? t("drafting") : t("draftTemplate")}
@@ -47,16 +47,16 @@ export default function ReminderPanel({ loanId }: { loanId: string }) {
       </div>
       {draft && (
         <div className="card draft">
-          <p className="t-body" lang={draft.language}>{draft.text}</p>
-          <p className="t-caption">{t(draft.source === "llm" ? "draftSource_llm" : "draftSource_template")}</p>
-          {draft.note && <p className="t-caption" style={{ color: "var(--accent-text)" }}>{draft.note}</p>}
+          <p className="body-3" lang={draft.language}>{draft.text}</p>
+          <p className="caption-5">{t(draft.source === "llm" ? "draftSource_llm" : "draftSource_template")}</p>
+          {draft.note && <p className="caption-5" style={{ color: "var(--accent-text)" }}>{draft.note}</p>}
           <div className="outcome-grid">
             <button className="btn" disabled={busy !== null} onClick={() => send("sms")}>{busy === "send" ? t("sending") : t("sendSms")}</button>
             <button className="btn" disabled={busy !== null} onClick={() => send("whatsapp")}>{t("sendWhatsapp")}</button>
           </div>
         </div>
       )}
-      {msg && <p className={msg.kind === "err" ? "alert-error t-label" : "t-label"} role={msg.kind === "err" ? "alert" : "status"}
+      {msg && <p className={msg.kind === "err" ? "alert-error body-5" : "body-5"} role={msg.kind === "err" ? "alert" : "status"}
         style={msg.kind === "ok" ? { color: "var(--accent-text)" } : undefined}>{msg.text}</p>}
     </section>
   );

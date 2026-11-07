@@ -31,7 +31,7 @@ function RankCell({ loan, onSaved }: { loan: ManagerLoan; onSaved: () => void })
         value={value} onChange={(e) => setValue(e.target.value)} />
       <button className="btn btn-quiet" type="submit" disabled={busy}>{t("setRank")}</button>
       {loan.rank !== null && <button className="btn btn-quiet" type="button" disabled={busy} onClick={() => { setValue(""); void save(null); }}>{t("clearRank")}</button>}
-      {err && <span className="alert-error t-caption" role="alert">{err}</span>}
+      {err && <span className="alert-error caption-5" role="alert">{err}</span>}
     </form>
   );
 }
@@ -41,8 +41,8 @@ export default function Loans() {
   const { state, reload } = useResource(fetchManagerLoans);
   return (
     <>
-      <h1 className="t-title">{t("navLoans")}</h1>
-      <p className="t-caption" style={{ maxWidth: 560 }}>{t("rankHelp")}</p>
+      <h1 className="heading-5">{t("navLoans")}</h1>
+      <p className="caption-5" style={{ maxWidth: 560 }}>{t("rankHelp")}</p>
       {state.status === "loading" && <SkeletonRows />}
       {state.status === "error" && <ErrorState onRetry={reload} />}
       {state.status === "ready" && state.data.length === 0 && <EmptyState title={t("noLoans")} body={t("noLoansBody")} />}
@@ -53,7 +53,7 @@ export default function Loans() {
             <tbody>{state.data.map((l) => (
               <tr key={l.loan_id}>
                 <td>{l.borrower_name}</td><td>{l.officer_name}</td><td>{l.dpd}</td>
-                <td><span className="pill t-caption"><span className={`dot dot-${l.band}`} aria-hidden="true" />{t(BAND_LABEL[l.band])}</span></td>
+                <td><span className="pill caption-5"><span className={`dot dot-${l.band}`} aria-hidden="true" />{t(BAND_LABEL[l.band])}</span></td>
                 <td><RankCell loan={l} onSaved={reload} /></td>
               </tr>
             ))}</tbody>

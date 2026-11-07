@@ -25,10 +25,10 @@ describe("manager dashboard", () => {
     expect(screen.getByRole("cell", { name: "Rahul" })).toBeInTheDocument();
   });
 
-  it("says so when the month-start group is empty instead of showing 0%", async () => {
+  it("says so when the month start group is empty instead of showing 0%", async () => {
     mockFetch(() => json({ ...DASH, roll_rate: { cohort: 0, rolled: 0, rate: null }, snapshot_date: null }));
     renderApp("/manager");
-    expect(await screen.findByText("No loans in the month-start group yet")).toBeInTheDocument();
+    expect(await screen.findByText("No loans in the month start group yet")).toBeInTheDocument();
   });
 
   it("shows an error with a working retry", async () => {

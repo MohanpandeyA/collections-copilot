@@ -85,7 +85,7 @@ export const strings = {
     mOpenPromises: "Open promises",
     rollRate: "Roll rate",
     rollExplain: "Of loans 1 to 30 days overdue at month start, the share now past 30 days.",
-    rollNone: "No loans in the month-start group yet",
+    rollNone: "No loans in the month start group yet",
     rollOf: "of",
     byOfficer: "By officer",
     officer: "Officer",

@@ -9,7 +9,7 @@ export default function ManagerLayout() {
   return (
     <div className="m-shell">
       <aside className="m-side">
-        <span className="t-heading">{t("appName")}</span>
+        <span className="title-2">{t("appName")}</span>
         <nav className="m-nav" aria-label="Manager">
           <NavLink to="/manager" end>{t("navDashboard")}</NavLink>
           <NavLink to="/manager/loans">{t("navLoans")}</NavLink>
@@ -18,10 +18,10 @@ export default function ManagerLayout() {
           <NavLink to="/manager/import">{t("navImport")}</NavLink>
         </nav>
         <div className="m-side-foot">
-          <button className="btn btn-quiet t-label" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label={t("language")}>
+          <button className="btn btn-quiet body-5" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label={t("language")}>
             {lang === "en" ? "हिन्दी" : "English"}
           </button>
-          <button className="btn btn-quiet t-label" onClick={signOut}>{t("signOut")}</button>
+          <button className="btn btn-quiet body-5" onClick={signOut}>{t("signOut")}</button>
         </div>
       </aside>
       <main className="m-main"><Outlet /></main>

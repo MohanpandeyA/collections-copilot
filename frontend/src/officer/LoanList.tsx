@@ -14,9 +14,9 @@ export default function LoanList() {
   return (
     <Page>
       <div>
-        <h1 className="t-title">{t("officerHome")}</h1>
+        <h1 className="heading-5">{t("officerHome")}</h1>
         {state.status === "ready" && state.data.length > 0 && (
-          <p className="t-caption">{state.data.length} {t("visitsCount")}</p>
+          <p className="caption-5">{state.data.length} {t("visitsCount")}</p>
         )}
       </div>
       {state.status === "loading" && <SkeletonRows />}
@@ -31,8 +31,8 @@ export default function LoanList() {
               <Link className="card row" to={`/officer/loans/${encodeURIComponent(l.loan_id)}`}>
                 <span className={`dot dot-${l.band}`} role="img" aria-label={t(BAND_LABEL[l.band])} />
                 <span className="row-main">
-                  <span className="t-body row-name" style={{ display: "block", fontWeight: 500 }}>{l.borrower_name}</span>
-                  <span className="t-caption">{l.dpd} {t("dpdDays")}</span>
+                  <span className="body-3 row-name" style={{ display: "block", fontWeight: 500 }}>{l.borrower_name}</span>
+                  <span className="caption-5">{l.dpd} {t("dpdDays")}</span>
                 </span>
               </Link>
             </li>

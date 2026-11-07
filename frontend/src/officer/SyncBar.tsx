@@ -15,20 +15,20 @@ export default function SyncBar() {
   return (
     <div className="syncbar" role="status">
       <div className="syncbar-head">
-        <span className="t-label">
+        <span className="body-5">
           {pending > 0 && `${pending} ${t("syncPending")}`}{pending > 0 && failed > 0 && " · "}
           {failed > 0 && `${failed} ${t("syncFailed")}`}
         </span>
         {pending > 0 && (
-          <button className="btn btn-quiet t-label" disabled={syncing} onClick={() => void syncNow()}>
+          <button className="btn btn-quiet body-5" disabled={syncing} onClick={() => void syncNow()}>
             {syncing ? t("syncing") : t("syncNow")}
           </button>
         )}
       </div>
       {items.filter((i) => i.status === "failed").map((i) => (
-        <p key={i.client_id} className="alert-error t-caption">
+        <p key={i.client_id} className="alert-error caption-5">
           {i.loan_id} · {t(LABEL[i.result])}: {i.reason}
-          <button className="btn btn-quiet t-caption" onClick={() => void dismiss(i.client_id)}>{t("dismiss")}</button>
+          <button className="btn btn-quiet caption-5" onClick={() => void dismiss(i.client_id)}>{t("dismiss")}</button>
         </p>
       ))}
     </div>

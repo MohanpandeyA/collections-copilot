@@ -19,11 +19,11 @@ function Shell() {
   return (
     <div className="shell">
       <header className="topbar">
-        <Link to="/officer" className="t-heading" style={{ textDecoration: "none", color: "inherit" }}>{t("appName")}</Link>
+        <Link to="/officer" className="title-2" style={{ textDecoration: "none", color: "inherit" }}>{t("appName")}</Link>
         <div className="topbar-actions">
-          <button className="btn btn-quiet t-label" onClick={() => setLang(lang === "en" ? "hi" : "en")}
+          <button className="btn btn-quiet body-5" onClick={() => setLang(lang === "en" ? "hi" : "en")}
             aria-label={t("language")}>{lang === "en" ? "हिन्दी" : "English"}</button>
-          <button className="btn btn-quiet t-label" onClick={signOut}>{t("signOut")}</button>
+          <button className="btn btn-quiet body-5" onClick={signOut}>{t("signOut")}</button>
         </div>
       </header>
       <SyncBar />

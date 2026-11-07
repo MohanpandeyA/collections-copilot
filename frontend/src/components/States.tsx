@@ -5,7 +5,7 @@ export function ErrorState({ onRetry }: { onRetry: () => void }) {
   const { t } = useT();
   return (
     <div className="state" role="alert">
-      <p className="t-body">{t("loadError")}</p>
+      <p className="body-3">{t("loadError")}</p>
       <button className="btn btn-quiet" onClick={onRetry}>{t("retry")}</button>
     </div>
   );
@@ -14,8 +14,8 @@ export function ErrorState({ onRetry }: { onRetry: () => void }) {
 export function EmptyState({ title, body }: { title: string; body: string }) {
   return (
     <div className="state">
-      <h2 className="t-heading">{title}</h2>
-      <p className="t-body" style={{ color: "var(--ink-soft)" }}>{body}</p>
+      <h2 className="title-2">{title}</h2>
+      <p className="body-3" style={{ color: "var(--ink-soft)" }}>{body}</p>
     </div>
   );
 }
