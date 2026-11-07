@@ -1,0 +1,10 @@
+.login { min-height: 100dvh; display: grid; place-items: center; padding: var(--s-24) var(--s-16); }
+.login-card { width: 100%; max-width: 400px; padding: var(--s-32) var(--s-24); display: flex; flex-direction: column; gap: var(--s-24); }
+.login-brand { display: flex; align-items: center; gap: var(--s-12); }
+.login-mark { width: var(--s-40); height: var(--s-40); border-radius: var(--r-md); background: var(--accent); display: grid; place-items: center; }
+.login-form { display: flex; flex-direction: column; gap: var(--s-16); }
+.login-lang { display: flex; justify-content: center; gap: var(--s-8); }
+.lang-btn { min-height: 40px; padding: 0 var(--s-16); border-radius: var(--r-pill); border: 1px solid var(--border); background: transparent; cursor: pointer;
+  transition: background-color var(--t-fast) var(--ease); }
+.lang-btn:hover { background: var(--surface-sunk); }
+.lang-btn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
