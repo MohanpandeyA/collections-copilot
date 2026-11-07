@@ -8,14 +8,17 @@ export class ApiError extends Error {
   }
 }
 
-type Options = { token?: string | null; body?: unknown; form?: Record<string, string> };
+type Options = { token?: string | null; body?: unknown; form?: Record<string, string>; file?: File };
 
 /** One place that talks to the backend: adds the token, turns failures into ApiError. */
 export async function api<T>(path: string, method: string, opts: Options = {}): Promise<T> {
   const headers: Record<string, string> = {};
   if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
   let body: BodyInit | undefined;
-  if (opts.form) {
+  if (opts.file) {
+    body = new FormData(); // the browser sets the multipart boundary itself
+    body.append("file", opts.file);
+  } else if (opts.form) {
     body = new URLSearchParams(opts.form);
   } else if (opts.body !== undefined) {
     headers["Content-Type"] = "application/json";
