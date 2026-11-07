@@ -41,6 +41,7 @@ class ParseResult:
     rows: list[LoanRow] = field(default_factory=list)
     rejected: list[RejectedRow] = field(default_factory=list)
     file_error: str | None = None
+    row_numbers: dict[str, int] = field(default_factory=dict)  # loan_id -> file row
 
 
 def _parse_row(raw: dict) -> LoanRow:
@@ -105,5 +106,6 @@ def parse_csv(text: str) -> ParseResult:
             result.rejected.append(RejectedRow(number, loan_id, str(err)))
             continue
         seen.add(row.loan_id)
+        result.row_numbers[row.loan_id] = number
         result.rows.append(row)
     return result
