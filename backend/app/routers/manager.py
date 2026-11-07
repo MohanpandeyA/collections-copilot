@@ -1,12 +1,19 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.deps import require_manager
+from app.core.deps import get_now, require_manager
 from app.domain.csv_import import parse_csv
+from app.domain.contact_window import IST
 from app.schemas.imports import ImportSummary
+from app.schemas.manager import (
+    ActivityRow, DashboardOut, ManagerLoanRow, PromiseRow, RankIn, SweepOut,
+)
+from app.services import manager_service
 from app.services.import_service import run_import
 from app.models import User
 
@@ -38,3 +45,38 @@ async def import_overdue(
     if parsed.file_error:
         raise HTTPException(400, parsed.file_error)
     return run_import(db, manager, parsed, date.today())
+
+
+@router.get("/dashboard", response_model=DashboardOut)
+def dashboard(manager: User = Depends(require_manager), db: Session = Depends(get_db)):
+    return manager_service.dashboard(db, manager)
+
+
+@router.get("/promises", response_model=list[PromiseRow])
+def promises(state: str | None = Query(None, pattern="^(open|kept|broken)$"),
+             manager: User = Depends(require_manager), db: Session = Depends(get_db)):
+    return manager_service.promises(db, manager, state)
+
+
+@router.post("/promises/sweep", response_model=SweepOut)
+def sweep(manager: User = Depends(require_manager), db: Session = Depends(get_db),
+          now: datetime = Depends(get_now)):
+    return SweepOut(marked_broken=manager_service.sweep_promises(db, manager, now.astimezone(IST).date()))
+
+
+@router.get("/activity", response_model=list[ActivityRow])
+def activity(manager: User = Depends(require_manager), db: Session = Depends(get_db)):
+    return manager_service.activity(db, manager)
+
+
+@router.get("/loans", response_model=list[ManagerLoanRow])
+def loans(manager: User = Depends(require_manager), db: Session = Depends(get_db)):
+    return manager_service.branch_loans(db, manager)
+
+
+@router.put("/loans/{loan_id}/rank")
+def set_rank(loan_id: str, body: RankIn, manager: User = Depends(require_manager),
+             db: Session = Depends(get_db)):
+    if not manager_service.set_rank(db, manager, loan_id, body.rank):
+        raise HTTPException(404, "Loan not found")
+    return {"loan_id": loan_id, "rank": body.rank}
