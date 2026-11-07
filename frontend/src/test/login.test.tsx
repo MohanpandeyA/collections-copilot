@@ -1,7 +1,7 @@
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { json, mockFetch, renderApp } from "./render";
+import { json, managerRoutes, mockFetch, renderApp } from "./render";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -38,13 +38,14 @@ describe("login", () => {
       open_loans: 1, overdue_amount: "1000.00", broken_promises: 0, open_promises: 0, snapshot_date: null,
       roll_rate: { cohort: 0, rolled: 0, rate: null }, by_officer: [],
     };
+    const routes = managerRoutes(DASH);
     mockFetch((u) => u.endsWith("/auth/login")
       ? json({ access_token: "tok", token_type: "bearer", role: "manager", language: "en" })
-      : json(DASH));
+      : routes(u));
     const user = userEvent.setup();
     renderApp("/login");
     await fillAndSubmit(user, "manager_central");
-    expect(await screen.findByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Branch overview" })).toBeInTheDocument();
   });
 
   it("shows a clear message for a wrong password and stays on the page", async () => {

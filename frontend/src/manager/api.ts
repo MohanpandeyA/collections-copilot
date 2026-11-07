@@ -7,7 +7,7 @@ export type Dashboard = {
 };
 export type PromiseRow = { loan_id: string; borrower_name: string; officer_name: string; promise_date: string; amount: string; state: "open" | "kept" | "broken" };
 export type ActivityRow = { client_id: string; loan_id: string; borrower_name: string; officer_name: string; result: string; occurred_at: string; note: string | null };
-export type ManagerLoan = { loan_id: string; borrower_name: string; officer_name: string; dpd: number; score: number; band: "high" | "medium" | "low"; rank: number | null };
+export type ManagerLoan = { loan_id: string; borrower_name: string; officer_name: string; dpd: number; outstanding: string; score: number; band: "high" | "medium" | "low"; rank: number | null };
 export type ImportSummary = {
   batch_id: number; loaded: number; assigned: number; fallback_count: number; rejected_count: number;
   rejected: { row_number: number; loan_id: string; reason: string }[];

@@ -25,3 +25,12 @@ export function mockFetch(handler: (url: string, init: RequestInit) => Response 
 
 export const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+
+/** Answers each manager endpoint with its own payload, so a page that makes several calls gets the right one. */
+export function managerRoutes(dash: unknown, extra: Record<string, unknown> = {}) {
+  const table: Record<string, unknown> = { "/manager/dashboard": dash, "/manager/loans": [], "/manager/promises": [], "/manager/activity": [], ...extra };
+  return (url: string) => {
+    const path = new URL(url, "http://x").pathname;
+    return json(path in table ? table[path] : []);
+  };
+}
