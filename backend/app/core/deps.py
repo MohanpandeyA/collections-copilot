@@ -1,4 +1,6 @@
 """FastAPI dependencies: current user and role guards."""
+from datetime import datetime, timezone
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -29,3 +31,8 @@ def require_role(role: str):
 
 require_officer = require_role("officer")
 require_manager = require_role("manager")
+
+
+def get_now() -> datetime:
+    """The server clock. A dependency so tests can pin the time."""
+    return datetime.now(timezone.utc)
