@@ -23,7 +23,7 @@ describe("login", () => {
   });
 
   it("signs an officer in and lands on the officer home", async () => {
-    const fetchMock = mockFetch(() => json({ access_token: "tok", token_type: "bearer", role: "officer", language: "en" }));
+    const fetchMock = mockFetch((u) => u.endsWith("/auth/login") ? json({ access_token: "tok", token_type: "bearer", role: "officer", language: "en" }) : json([]));
     const user = userEvent.setup();
     renderApp("/login");
     await fillAndSubmit(user);
