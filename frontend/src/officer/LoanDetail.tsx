@@ -8,6 +8,7 @@ import { useT } from "../i18n/useT";
 import { checkCall, fetchLoan, openDialer } from "./api";
 import { BAND_LABEL } from "./LoanList";
 import OutcomePanel from "./OutcomePanel";
+import ReminderPanel from "./ReminderPanel";
 
 const inr = (v: string) => `₹${Number(v).toLocaleString("en-IN")}`;
 
@@ -67,6 +68,7 @@ export default function LoanDetail() {
               <ol className="reasons t-body">{d.reasons.map((r) => <li key={r.code}>{r.text}</li>)}</ol>
             </section>
             <OutcomePanel loanId={d.loan_id} />
+            <ReminderPanel loanId={d.loan_id} />
             <div className="actions">
               <button className="btn" onClick={() => onCall(d.phone)} disabled={calling}>
                 {calling ? t("calling") : t("call")}

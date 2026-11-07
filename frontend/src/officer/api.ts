@@ -21,3 +21,9 @@ export const checkCall = (token: string, loanId: string) =>
 export function openDialer(phone: string): void {
   window.location.href = `tel:${phone}`;
 }
+
+export type Draft = { id: number; loan_id: string; language: "en" | "hi"; text: string; source: "template" | "llm"; state: string; note: string | null };
+export const createDraft = (token: string, loanId: string, language: "en" | "hi", useAi: boolean) =>
+  api<Draft>("/reminders/draft", "POST", { token, body: { loan_id: loanId, language, use_ai: useAi } });
+export const sendDraft = (token: string, id: number, channel: "sms" | "whatsapp") =>
+  api<{ id: number; state: string; message_id: string }>(`/reminders/${id}/send`, "POST", { token, body: { channel } });
