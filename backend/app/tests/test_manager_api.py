@@ -107,6 +107,12 @@ def test_manager_loans_lists_officer_and_score(client, manager):
     assert row["officer_name"] == "Rahul Chouhan" and row["rank"] is None and "band" in row
 
 
+def test_manager_loans_include_outstanding_for_the_age_chart(client, manager):
+    rows = client.get("/manager/loans", headers=manager).json()
+    row = next(r for r in rows if r["loan_id"] == "LN-10293")
+    assert float(row["outstanding"]) > 0
+
+
 def test_rank_moves_loan_to_top_of_officers_list_and_can_be_cleared(client, manager, officer):
     lid = new_loan(client, manager)
     try:

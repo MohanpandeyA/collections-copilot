@@ -57,6 +57,7 @@ class ManagerLoanRow(BaseModel):
     borrower_name: str
     officer_name: str
     dpd: int
+    outstanding: Decimal
     score: float
     band: str
     rank: int | None

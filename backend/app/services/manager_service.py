@@ -100,7 +100,8 @@ def branch_loans(db: Session, manager: User) -> list[ManagerLoanRow]:
     for loan, officer, rank in rows:
         score = scores[loan.loan_id].score if loan.loan_id in scores else 0.0
         out.append(ManagerLoanRow(loan_id=loan.loan_id, borrower_name=loan.borrower_name,
-                                  officer_name=officer.full_name, dpd=loan.dpd, score=score,
+                                  officer_name=officer.full_name, dpd=loan.dpd,
+                                  outstanding=loan.outstanding, score=score,
                                   band=band(score), rank=rank))
     out.sort(key=lambda r: -r.score)
     return out
