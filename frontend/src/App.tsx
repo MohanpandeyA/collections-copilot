@@ -7,6 +7,9 @@ import NotFound from "./pages/NotFound";
 
 // Each role's screens load only when needed, so an officer never downloads the manager dashboard.
 const Home = lazy(() => import("./pages/Placeholder"));
+const OfficerLayout = lazy(() => import("./officer/OfficerLayout"));
+const LoanList = lazy(() => import("./officer/LoanList"));
+const LoanDetail = lazy(() => import("./officer/LoanDetail"));
 
 function Start() {
   const { session } = useAuth();
@@ -21,7 +24,10 @@ export default function App() {
         <Route path="/" element={<Start />} />
         <Route path="/login" element={<Login />} />
         <Route element={<RequireRole role="officer" />}>
-          <Route path="/officer" element={<Home titleKey="officerHome" />} />
+          <Route path="/officer" element={<OfficerLayout />}>
+            <Route index element={<LoanList />} />
+            <Route path="loans/:loanId" element={<LoanDetail />} />
+          </Route>
         </Route>
         <Route element={<RequireRole role="manager" />}>
           <Route path="/manager" element={<Home titleKey="managerHome" />} />
