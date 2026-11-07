@@ -1,0 +1,54 @@
+/* Design tokens. Every colour, space, radius and duration in the app comes from here. */
+:root {
+  /* Surfaces and ink: warm, not stark white */
+  --bg: #fbf7f0;
+  --surface: #ffffff;
+  --surface-sunk: #f4ede1;
+  --border: #e6dccb;
+  --ink: #2b2118;
+  --ink-soft: #6b5d4d; /* 6.2:1 on --bg */
+
+  /* One accent. The fill carries dark ink text; the text shade is for links on light surfaces. */
+  --accent: #f59e0b;
+  --accent-hover: #e08e06;
+  --accent-press: #c77d05;
+  --accent-text: #9a5b00; /* 5.3:1 on --bg */
+  --accent-soft: #fdf0d5;
+
+  /* Status: always shown with a text label as well as colour */
+  --danger: #b42318;
+  --danger-soft: #fdeceb;
+  --band-high: #d92d20;
+  --band-medium: #f59e0b;
+  --band-low: #2f9e5b;
+
+  /* Spacing scale (px) */
+  --s-0: 0;
+  --s-2: 2px;
+  --s-4: 4px;
+  --s-8: 8px;
+  --s-12: 12px;
+  --s-16: 16px;
+  --s-24: 24px;
+  --s-32: 32px;
+  --s-40: 40px;
+  --s-48: 48px;
+  --s-64: 64px;
+  --s-80: 80px;
+  --s-96: 96px;
+
+  /* Radius: inner = outer - padding, so nested shapes stay concentric */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(43, 33, 24, 0.06), 0 4px 16px rgba(43, 33, 24, 0.05);
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 150ms;
+  --t-base: 250ms;
+
+  --tap: 48px; /* minimum touch target */
+  --font: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
