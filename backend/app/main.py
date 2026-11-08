@@ -23,7 +23,7 @@ app.include_router(outcomes.router)
 app.include_router(reminders.router)
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])  # HEAD because some uptime pingers use it
 def health():
     with engine.connect() as conn:
         conn.execute(text("select 1"))
