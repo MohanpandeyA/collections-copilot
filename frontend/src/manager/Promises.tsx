@@ -5,7 +5,7 @@ import { EmptyState, ErrorState, SkeletonRows } from "../components/States";
 import { useT } from "../i18n/useT";
 import type { StringKey } from "../i18n/strings";
 import { fetchPromises, sweepPromises } from "./api";
-import { inr } from "./Dashboard";
+import { inr } from "../format";
 
 const FILTERS: { value: string; label: StringKey }[] = [
   { value: "", label: "allStates" }, { value: "open", label: "stateOpen" },

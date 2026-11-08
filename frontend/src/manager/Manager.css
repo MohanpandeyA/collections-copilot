@@ -20,7 +20,7 @@ table.table { width: 100%; border-collapse: collapse; }
 .filters .btn { min-height: 40px; }
 .filters [aria-pressed="true"] { background: var(--accent); color: var(--ink); border-color: var(--accent); }
 .rank-form { display: flex; gap: var(--s-8); align-items: center; }
-.rank-form .input { width: 88px; min-height: 40px; }
+.rank-form .input { width: 140px; min-height: 40px; }
 .rank-form .btn { min-height: 40px; }
 .m-top { display: none; }
 @media (max-width: 800px) {

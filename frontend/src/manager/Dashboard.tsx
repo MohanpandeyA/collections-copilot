@@ -9,7 +9,6 @@ import { fetchActivity, fetchDashboard, fetchManagerLoans, fetchPromises } from 
 import { bandCounts, overdueByAge, promiseCounts, resultMix, visitsByDay } from "./insights";
 import "../charts/Charts.css";
 
-export { inr };
 const pct = (r: number | null) => (r === null ? "–" : `${r}%`);
 
 function Stat({ icon, label, value }: { icon: IconName; label: string; value: string | number }) {
@@ -21,9 +20,9 @@ function Stat({ icon, label, value }: { icon: IconName; label: string; value: st
   );
 }
 
-function Panel({ icon, title, children }: { icon: IconName; title: string; children: React.ReactNode }) {
+function Panel({ icon, title, wide, children }: { icon: IconName; title: string; wide?: boolean; children: React.ReactNode }) {
   return (
-    <section className="card panel" aria-label={title}>
+    <section className={`card panel${wide ? " panel-wide" : ""}`} aria-label={title}>
       <h2 className="title-2 panel-title"><Icon name={icon} size={20} />{title}</h2>
       {children}
     </section>
@@ -96,6 +95,15 @@ export default function Dashboard() {
                   { key: "kept", label: t("stateKept"), value: prom.kept, color: "var(--band-low)" },
                   { key: "broken", label: t("stateBroken"), value: prom.broken, color: "var(--band-high)" },
                 ]} />
+                <ul className="next-list" aria-label={t("nextPromises")}>
+                  {promises.filter((p) => p.state === "open").sort((a, b) => a.promise_date.localeCompare(b.promise_date)).slice(0, 4).map((p) => (
+                    <li key={p.loan_id} className="next-row">
+                      <span className="body-5">{p.borrower_name}</span>
+                      <span className="caption-5">{p.promise_date}</span>
+                      <span className="body-5 hbar-n">{inr(p.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
               </Panel>
 
               <Panel icon="check-circle" title={t("chVisits")}>
@@ -108,7 +116,7 @@ export default function Dashboard() {
                 ]} />
               </Panel>
 
-              <Panel icon="squares-four" title={t("chOfficers")}>
+              <Panel icon="squares-four" title={t("chOfficers")} wide>
                 <div className="hbar">
                   {d.by_officer.map((o) => (
                     <div className="hbar-row" key={o.officer_id}>

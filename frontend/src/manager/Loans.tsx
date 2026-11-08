@@ -5,7 +5,7 @@ import { useResource } from "../api/useResource";
 import { EmptyState, ErrorState, SkeletonRows } from "../components/States";
 import { useT } from "../i18n/useT";
 import { BAND_LABEL } from "../officer/LoanList";
-import { inr } from "./Dashboard";
+import { inr } from "../format";
 import { Icon } from "../components/Icon";
 import { fetchManagerLoans, setRank, type ManagerLoan } from "./api";
 import { filterLoans } from "./insights";
