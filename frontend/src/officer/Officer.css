@@ -90,3 +90,4 @@
 .tint-unreachable:hover { background: var(--surface-sunk); } .tint-dispute:hover { background: var(--danger-soft); }
 .back { gap: var(--s-8); text-decoration: none; }
 .actions .btn { width: 100%; text-decoration: none; }
+.tiles .tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
