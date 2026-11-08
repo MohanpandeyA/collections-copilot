@@ -89,6 +89,7 @@ p { text-wrap: pretty; }
 }
 
 /* Search box with a leading icon, used on both officer and manager lists */
-.search { position: relative; display: flex; align-items: center; flex: 1 1 260px; min-width: 0; color: var(--ink-soft); }
+.search { position: relative; display: flex; align-items: center; min-width: 0; color: var(--ink-soft); }
+.filters .search { flex: 1 1 260px; }
 .search svg { position: absolute; left: var(--s-12); pointer-events: none; }
 .search-input { width: 100%; padding-left: var(--s-40); }

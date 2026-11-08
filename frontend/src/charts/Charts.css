@@ -28,7 +28,7 @@
 .bar-in { animation: rise 600ms var(--ease) both; }
 .bar-in-x { animation: rise-x 600ms var(--ease) both; }
 .chart-in { animation: fade-up 500ms var(--ease) both; }
-.dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-16); }
+.dash-grid { display: grid; align-items: start; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-16); }
 .panel { padding: var(--s-24); display: flex; flex-direction: column; gap: var(--s-16); min-width: 0; }
 .panel-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-12); }
 .panel-title { display: inline-flex; align-items: center; gap: var(--s-8); }
