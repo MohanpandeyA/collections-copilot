@@ -53,6 +53,53 @@ class ActivityRow(BaseModel):
     amount_received: Decimal | None = None
 
 
+class ActivityPage(BaseModel):
+    items: list[ActivityRow]
+    total: int      # rows matching the filter, across all pages
+    limit: int
+    offset: int
+
+
+class BandCounts(BaseModel):
+    high: int
+    medium: int
+    low: int
+
+
+class AgeBucket(BaseModel):
+    key: str        # b1 | b2 | b3 | b4, the labels are the screen's job
+    amount: Decimal
+
+
+class PromiseCounts(BaseModel):
+    open: int
+    kept: int
+    broken: int
+
+
+class VisitDay(BaseModel):
+    day: date
+    count: int
+
+
+class ResultMix(BaseModel):
+    paid: int
+    promise: int
+    unreachable: int
+    dispute: int
+
+
+class InsightsOut(BaseModel):
+    """Everything the dashboard charts draw, counted on the server so the browser never has to
+    download the whole loan, promise and activity lists."""
+    bands: BandCounts
+    overdue_by_age: list[AgeBucket]
+    promises: PromiseCounts
+    visits_by_day: list[VisitDay]   # last 7 IST days ending today, oldest first, zeros included
+    result_mix: ResultMix           # the same 7 days
+    next_promises: list[PromiseRow]  # earliest open promises
+
+
 class ManagerLoanRow(BaseModel):
     loan_id: str
     borrower_name: str

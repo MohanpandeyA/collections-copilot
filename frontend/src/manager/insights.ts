@@ -1,4 +1,4 @@
-import type { ActivityRow, ManagerLoan, PromiseRow } from "./api";
+import type { Insights, ManagerLoan } from "./api";
 
 export const AGE_BUCKETS = [
   { key: "b1", label: "1 to 30", min: 1, max: 30 },
@@ -7,46 +7,15 @@ export const AGE_BUCKETS = [
   { key: "b4", label: "Over 90", min: 91, max: Infinity },
 ] as const;
 
-/** Rupees overdue per age bucket. A loan lands in exactly one bucket. */
-export function overdueByAge(loans: ManagerLoan[]) {
-  return AGE_BUCKETS.map((b) => ({
-    key: b.key, label: b.label,
-    value: loans.filter((l) => l.dpd >= b.min && l.dpd <= b.max).reduce((sum, l) => sum + Number(l.outstanding), 0),
-  }));
-}
-
-export function bandCounts(loans: ManagerLoan[]) {
-  return { high: loans.filter((l) => l.band === "high").length, medium: loans.filter((l) => l.band === "medium").length, low: loans.filter((l) => l.band === "low").length };
-}
-
-export function promiseCounts(rows: PromiseRow[]) {
-  return { open: rows.filter((p) => p.state === "open").length, kept: rows.filter((p) => p.state === "kept").length, broken: rows.filter((p) => p.state === "broken").length };
-}
-
-const IST_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" });
+const AGE_LABEL: Record<string, string> = Object.fromEntries(AGE_BUCKETS.map((b) => [b.key, b.label]));
 const IST_SHORT = new Intl.DateTimeFormat("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short" });
-export const istDay = (d: Date) => IST_DAY.format(d);
 
-/** Visits per day for the last `days` days, in IST, oldest first. Days with no visits show as 0. */
-export function visitsByDay(rows: ActivityRow[], now: Date, days = 7) {
-  const out = [];
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now.getTime() - i * 86_400_000);
-    out.push({ key: istDay(d), label: IST_SHORT.format(d), value: 0 });
-  }
-  const index = new Map(out.map((o) => [o.key, o]));
-  for (const r of rows) {
-    const slot = index.get(istDay(new Date(r.occurred_at)));
-    if (slot) slot.value += 1;
-  }
-  return out;
-}
+/** The server counts everything; these only turn its numbers into chart bars. */
+export const ageBars = (rows: Insights["overdue_by_age"]) =>
+  rows.map((r) => ({ key: r.key, label: AGE_LABEL[r.key] ?? r.key, value: Number(r.amount) }));
 
-export function resultMix(rows: ActivityRow[]) {
-  const mix = { paid: 0, promise: 0, unreachable: 0, dispute: 0 };
-  for (const r of rows) if (r.result in mix) mix[r.result as keyof typeof mix] += 1;
-  return mix;
-}
+export const dayBars = (rows: Insights["visits_by_day"]) =>
+  rows.map((r) => ({ key: r.day, label: IST_SHORT.format(new Date(`${r.day}T12:00:00+05:30`)), value: r.count }));
 
 export function filterLoans(loans: ManagerLoan[], band: string, query: string) {
   const q = query.trim().toLowerCase();

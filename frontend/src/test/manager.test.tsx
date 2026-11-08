@@ -2,7 +2,7 @@ import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { saveSession } from "../auth/session";
-import { json, managerRoutes, mockFetch, renderApp } from "./render";
+import { activityPage, EMPTY_INSIGHTS, json, managerRoutes, mockFetch, renderApp } from "./render";
 
 const DASH = {
   open_loans: 12, overdue_amount: "250000.00", broken_promises: 2, open_promises: 3, snapshot_date: "2026-11-01",
@@ -124,22 +124,24 @@ describe("promise tracker", () => {
 });
 
 describe("activity", () => {
+  const row = (id: string, who: string, extra: object = {}) =>
+    ({ client_id: id, loan_id: "L-1", borrower_name: who, officer_name: "Rahul", result: "paid", occurred_at: "2026-11-07T05:00:00Z", note: null, ...extra });
+
   it("shows logged visits", async () => {
-    mockFetch(() => json([{ client_id: "c1", loan_id: "L-1", borrower_name: "Meena Devi", officer_name: "Rahul", result: "paid", occurred_at: "2026-11-07T05:00:00Z", note: null }]));
+    mockFetch(() => json(activityPage([row("c1", "Meena Devi")])));
     renderApp("/manager/activity");
     expect(await screen.findByRole("cell", { name: "Paid" })).toBeInTheDocument();
   });
 
   it("shows the amount received next to a payment", async () => {
-    mockFetch(() => json([{ client_id: "c1", loan_id: "L-1", borrower_name: "Meena Devi", officer_name: "Rahul", result: "paid", occurred_at: "2026-11-07T05:00:00Z", note: null, amount_received: "1500.00" }]));
+    mockFetch(() => json(activityPage([row("c1", "Meena Devi", { amount_received: "1500.00" })])));
     renderApp("/manager/activity");
     expect(await screen.findByText(/₹1,500/)).toBeInTheDocument();
   });
 
   it("Refresh fetches the feed again and shows rows logged since", async () => {
-    const row = (id: string, who: string) => ({ client_id: id, loan_id: "L-1", borrower_name: who, officer_name: "Rahul", result: "paid", occurred_at: "2026-11-07T05:00:00Z", note: null });
     let calls = 0;
-    mockFetch(() => json(++calls === 1 ? [row("c1", "Meena Devi")] : [row("c1", "Meena Devi"), row("c2", "Ravi Kumar")]));
+    mockFetch(() => json(activityPage(++calls === 1 ? [row("c1", "Meena Devi")] : [row("c1", "Meena Devi"), row("c2", "Ravi Kumar")])));
     const user = userEvent.setup();
     renderApp("/manager/activity");
     await screen.findByText("Meena Devi");
@@ -147,6 +149,75 @@ describe("activity", () => {
     await user.click(screen.getByRole("button", { name: "Refresh" }));
     expect(await screen.findByText("Ravi Kumar")).toBeInTheDocument();
     expect(calls).toBe(2);
+  });
+
+  it("pages with Newer and Older, asks the server for each page, and shows where you are", async () => {
+    const f = mockFetch((url) => {
+      const offset = Number(new URL(url, "http://x").searchParams.get("offset"));
+      return json(activityPage([row(`c${offset}`, offset === 0 ? "First Page" : "Second Page")], 30, offset));
+    });
+    const user = userEvent.setup();
+    renderApp("/manager/activity");
+    expect(await screen.findByText("First Page")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("1 to 1 of 30");
+    expect(screen.getByRole("button", { name: "Newer" })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: "Older" }));
+    expect(await screen.findByText("Second Page")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("26 to 26 of 30");
+    expect(f.mock.calls.some(([u]) => String(u).includes("limit=25") && String(u).includes("offset=25"))).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Newer" }));
+    expect(await screen.findByText("First Page")).toBeInTheDocument();
+  });
+
+  it("Older is disabled on the last page", async () => {
+    mockFetch(() => json(activityPage([row("c1", "Meena Devi")], 1)));
+    renderApp("/manager/activity");
+    await screen.findByText("Meena Devi");
+    expect(screen.getByRole("button", { name: "Older" })).toBeDisabled();
+  });
+
+  it("the date filter goes to the server and clears", async () => {
+    const f = mockFetch(() => json(activityPage([row("c1", "Meena Devi")])));
+    const user = userEvent.setup();
+    renderApp("/manager/activity");
+    await screen.findByText("Meena Devi");
+    await user.type(screen.getByLabelText("From"), "2026-11-01");
+    await user.type(screen.getByLabelText("To"), "2026-11-05");
+    await waitFor(() => expect(f.mock.calls.some(([u]) => String(u).includes("date_from=2026-11-01") && String(u).includes("date_to=2026-11-05"))).toBe(true));
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+    await waitFor(() => expect(String(f.mock.calls[f.mock.calls.length - 1][0])).not.toContain("date_from"));
+  });
+
+  it("says so when the chosen dates have no visits, and when the end is before the start it does not call the server with that pair", async () => {
+    const f = mockFetch((url) => json(activityPage(url.includes("date_from") ? [] : [row("c1", "Meena Devi")])));
+    const user = userEvent.setup();
+    renderApp("/manager/activity");
+    await screen.findByText("Meena Devi");
+    await user.type(screen.getByLabelText("From"), "2026-11-01");
+    expect(await screen.findByText("No visits in these dates")).toBeInTheDocument();
+    await user.clear(screen.getByLabelText("From"));
+    await user.type(screen.getByLabelText("To"), "2026-11-03");
+    await user.type(screen.getByLabelText("From"), "2026-11-09");
+    expect(f.mock.calls.every(([u]) => !(String(u).includes("date_from=2026-11-09") && String(u).includes("date_to=2026-11-03")))).toBe(true);
+  });
+});
+
+describe("dashboard insights from the server", () => {
+  it("draws the charts from the server counts, not from a loan list", async () => {
+    const insights = {
+      ...EMPTY_INSIGHTS,
+      bands: { high: 3, medium: 2, low: 1 },
+      promises: { open: 4, kept: 5, broken: 6 },
+      result_mix: { paid: 7, promise: 1, unreachable: 2, dispute: 0 },
+      next_promises: [{ loan_id: "L-9", borrower_name: "Kavita Rao", officer_name: "Rahul", promise_date: "2026-11-12", amount: "3000.00", state: "open" }],
+    };
+    const f = mockFetch(managerRoutes(DASH, { "/manager/insights": insights }));
+    renderApp("/manager");
+    expect(await screen.findByText("Kavita Rao")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /Priority|priority/ })).toBeInTheDocument();
+    const urls = f.mock.calls.map(([u]) => String(u));
+    expect(urls.some((u) => u.endsWith("/manager/insights"))).toBe(true);
+    expect(urls.some((u) => u.endsWith("/manager/loans") || u.includes("/manager/activity"))).toBe(false);
   });
 });
 

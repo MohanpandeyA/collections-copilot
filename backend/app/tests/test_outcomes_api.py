@@ -243,7 +243,7 @@ def test_score_is_recalculated_after_a_payment(client, officer, loan_id):
 
 def test_activity_shows_amount_received(client, officer, manager, loan_id):
     post(client, officer, item(loan_id, "paid", amount_received="12500"))
-    row = next(a for a in client.get("/manager/activity", headers=manager).json() if a["loan_id"] == loan_id)
+    row = next(a for a in client.get("/manager/activity", headers=manager).json()["items"] if a["loan_id"] == loan_id)
     assert float(row["amount_received"]) == 12500.0
 
 

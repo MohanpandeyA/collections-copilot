@@ -11,7 +11,7 @@ from app.domain.csv_import import parse_csv
 from app.domain.contact_window import IST
 from app.schemas.imports import ImportSummary
 from app.schemas.manager import (
-    ActivityRow, DashboardOut, ManagerLoanRow, PromiseRow, RankIn, SweepOut,
+    ActivityPage, DashboardOut, InsightsOut, ManagerLoanRow, PromiseRow, RankIn, SweepOut,
 )
 from app.services import manager_service
 from app.services.import_service import run_import
@@ -65,9 +65,19 @@ def sweep(manager: User = Depends(require_manager), db: Session = Depends(get_db
     return SweepOut(marked_broken=manager_service.sweep_promises(db, manager, now.astimezone(IST).date()))
 
 
-@router.get("/activity", response_model=list[ActivityRow])
-def activity(manager: User = Depends(require_manager), db: Session = Depends(get_db)):
-    return manager_service.activity(db, manager)
+@router.get("/activity", response_model=ActivityPage)
+def activity(limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0),
+             date_from: date | None = None, date_to: date | None = None,
+             manager: User = Depends(require_manager), db: Session = Depends(get_db)):
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(422, "date_from is after date_to")
+    return manager_service.activity(db, manager, limit, offset, date_from, date_to)
+
+
+@router.get("/insights", response_model=InsightsOut)
+def insights(manager: User = Depends(require_manager), db: Session = Depends(get_db),
+             now: datetime = Depends(get_now)):
+    return manager_service.insights(db, manager, now.astimezone(IST).date())
 
 
 @router.get("/loans", response_model=list[ManagerLoanRow])

@@ -92,11 +92,11 @@ def test_activity_log_shows_branch_outcomes_newest_first(client, manager, east):
     item = {"client_id": str(uuid.uuid4()), "loan_id": lid, "result": "unreachable",
             "occurred_at": datetime(2026, 11, 7, 12, tzinfo=IST).isoformat()}
     client.post("/outcomes/batch", headers=h, json={"items": [item]})
-    rows = client.get("/manager/activity", headers=manager).json()
+    rows = client.get("/manager/activity", headers=manager).json()["items"]
     assert rows[0]["loan_id"] == lid and rows[0]["officer_name"] == "Rahul Chouhan"
     times = [r["occurred_at"] for r in rows]
     assert times == sorted(times, reverse=True)
-    assert lid not in [r["loan_id"] for r in client.get("/manager/activity", headers=east).json()]
+    assert lid not in [r["loan_id"] for r in client.get("/manager/activity", headers=east).json()["items"]]
 
 
 # --- reorder -------------------------------------------------------------------------

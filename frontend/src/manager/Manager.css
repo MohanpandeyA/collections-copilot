@@ -34,3 +34,7 @@ table.table { width: 100%; border-collapse: collapse; }
 
 .page-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-16); flex-wrap: wrap; }
 .page-head .btn { min-height: 40px; }
+
+.filters .input[type="date"] { flex: 0 0 auto; min-height: 40px; min-width: 160px; padding: var(--s-8) var(--s-12); }
+.pager { display: flex; align-items: center; justify-content: space-between; padding: var(--s-8) 0; gap: var(--s-8); }
+.pager .body-5 { flex: 1; text-align: center; color: var(--ink-soft); }

@@ -2,8 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Bars, Donut, Ring, StackBar } from "../charts/Charts";
-import type { ActivityRow, ManagerLoan } from "../manager/api";
-import { bandCounts, filterLoans, overdueByAge, resultMix, visitsByDay } from "../manager/insights";
+import type { ManagerLoan } from "../manager/api";
+import { ageBars, dayBars, filterLoans } from "../manager/insights";
 
 const loan = (o: Partial<ManagerLoan>): ManagerLoan => ({
   loan_id: "L-1", borrower_name: "Meena Devi", officer_name: "Rahul", dpd: 10, outstanding: "1000.00", score: 50, band: "medium", rank: null, ...o,
@@ -52,42 +52,14 @@ describe("chart components", () => {
 });
 
 describe("dashboard numbers", () => {
-  it("puts each loan in exactly one age bucket and adds up the rupees", () => {
-    const loans = [loan({ dpd: 1, outstanding: "100" }), loan({ dpd: 30, outstanding: "50" }), loan({ dpd: 31, outstanding: "10" }), loan({ dpd: 95, outstanding: "7" })];
-    expect(overdueByAge(loans).map((b) => b.value)).toEqual([150, 10, 0, 7]);
+  it("turns the server's age buckets into labelled bars in order, as numbers", () => {
+    const bars = ageBars([{ key: "b1", amount: "150.00" }, { key: "b2", amount: "10.00" }, { key: "b3", amount: "0" }, { key: "b4", amount: "7.50" }]);
+    expect(bars.map((b) => [b.label, b.value])).toEqual([["1 to 30", 150], ["31 to 60", 10], ["61 to 90", 0], ["Over 90", 7.5]]);
   });
 
-  it("counts loans by band", () => {
-    expect(bandCounts([loan({ band: "high" }), loan({ band: "high" }), loan({ band: "low" })])).toEqual({ high: 2, medium: 0, low: 1 });
-  });
-
-  it("counts visits per IST day and gives empty days a zero", () => {
-    const now = new Date("2026-11-07T10:00:00Z");
-    const row = (iso: string): ActivityRow => ({ client_id: iso, loan_id: "L", borrower_name: "B", officer_name: "O", result: "paid", occurred_at: iso, note: null });
-    const days = visitsByDay([row("2026-11-07T05:00:00Z"), row("2026-11-07T06:00:00Z"), row("2026-11-05T05:00:00Z"), row("2026-10-01T05:00:00Z")], now, 7);
-    expect(days).toHaveLength(7);
-    expect(days[6].value).toBe(2);
-    expect(days.find((d) => d.key === "2026-11-05")?.value).toBe(1);
-    expect(days.reduce((a, d) => a + d.value, 0)).toBe(3);
-  });
-
-  it("a 23:30 IST visit counts for its IST day even though UTC has already moved on", () => {
-    const now = new Date("2026-11-07T10:00:00Z");
-    const late: ActivityRow = { client_id: "x", loan_id: "L", borrower_name: "B", officer_name: "O", result: "paid", occurred_at: "2026-11-06T18:00:00Z", note: null };
-    expect(visitsByDay([late], now, 3).find((d) => d.key === "2026-11-06")?.value).toBe(1);
-    expect(visitsByDay([late], now, 3).find((d) => d.key === "2026-11-07")?.value).toBe(0);
-  });
-
-  it("a 00:30 IST visit belongs to the new IST day, not the previous UTC day", () => {
-    const now = new Date("2026-11-07T10:00:00Z");
-    const late: ActivityRow = { client_id: "x", loan_id: "L", borrower_name: "B", officer_name: "O", result: "paid", occurred_at: "2026-11-06T19:00:00Z", note: null };
-    expect(visitsByDay([late], now, 3).find((d) => d.key === "2026-11-06")?.value).toBe(0);
-    expect(visitsByDay([late], now, 3).find((d) => d.key === "2026-11-07")?.value).toBe(1);
-  });
-
-  it("mixes results", () => {
-    const r = (result: string) => ({ result }) as ActivityRow;
-    expect(resultMix([r("paid"), r("paid"), r("dispute")])).toEqual({ paid: 2, promise: 0, unreachable: 0, dispute: 1 });
+  it("labels each visit day with its own IST date and keeps the zero days", () => {
+    const bars = dayBars([{ day: "2026-11-05", count: 0 }, { day: "2026-11-06", count: 3 }, { day: "2026-11-07", count: 1 }]);
+    expect(bars.map((b) => [b.key, b.label, b.value])).toEqual([["2026-11-05", "5 Nov", 0], ["2026-11-06", "6 Nov", 3], ["2026-11-07", "7 Nov", 1]]);
   });
 
   it("filters by band and by name, officer or loan number", () => {

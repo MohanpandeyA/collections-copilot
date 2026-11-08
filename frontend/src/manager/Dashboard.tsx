@@ -5,8 +5,8 @@ import { Icon, type IconName } from "../components/Icon";
 import { ErrorState, SkeletonRows } from "../components/States";
 import { inr, lakh } from "../format";
 import { useT } from "../i18n/useT";
-import { fetchActivity, fetchDashboard, fetchManagerLoans, fetchPromises } from "./api";
-import { bandCounts, overdueByAge, promiseCounts, resultMix, visitsByDay } from "./insights";
+import { fetchDashboard, fetchInsights } from "./api";
+import { ageBars, dayBars } from "./insights";
 import "../charts/Charts.css";
 
 const pct = (r: number | null) => (r === null ? "–" : `${r}%`);
@@ -33,10 +33,8 @@ export default function Dashboard() {
   const { t } = useT();
   const nav = useNavigate();
   const { state, reload } = useResource(async (tok) => {
-    const [dash, loans, promises, activity] = await Promise.all([
-      fetchDashboard(tok), fetchManagerLoans(tok), fetchPromises(tok, ""), fetchActivity(tok),
-    ]);
-    return { dash, loans, promises, activity };
+    const [dash, insights] = await Promise.all([fetchDashboard(tok), fetchInsights(tok)]);
+    return { dash, insights };
   });
 
   return (
@@ -45,11 +43,13 @@ export default function Dashboard() {
       {state.status === "loading" && <SkeletonRows count={4} />}
       {state.status === "error" && <ErrorState onRetry={reload} />}
       {state.status === "ready" && (() => {
-        const { dash: d, loans, promises, activity } = state.data;
-        const bands = bandCounts(loans);
-        const prom = promiseCounts(promises);
-        const mix = resultMix(activity);
-        const days = visitsByDay(activity, new Date());
+        const { dash: d, insights: ins } = state.data;
+        const bands = ins.bands;
+        const prom = ins.promises;
+        const mix = ins.result_mix;
+        const days = dayBars(ins.visits_by_day);
+        const age = ageBars(ins.overdue_by_age);
+        const totalLoans = bands.high + bands.medium + bands.low;
         const maxOpen = Math.max(...d.by_officer.map((o) => o.open_loans), 1);
         return (
           <>
@@ -62,7 +62,7 @@ export default function Dashboard() {
 
             <div className="dash-grid">
               <Panel icon="chart-pie-slice" title={t("chPriority")}>
-                <Donut title={t("chPriority")} centre={{ big: String(loans.length), small: t("chPriorityCentre") }}
+                <Donut title={t("chPriority")} centre={{ big: String(totalLoans), small: t("chPriorityCentre") }}
                   onSelect={(band) => nav(`/manager/loans?band=${band}`)}
                   slices={[
                     { key: "high", label: t("bandHigh"), value: bands.high, color: "var(--band-high)" },
@@ -72,8 +72,8 @@ export default function Dashboard() {
               </Panel>
 
               <Panel icon="chart-bar" title={t("chAge")}>
-                {loans.length === 0 ? <p className="body-6">{t("chNoData")}</p> : (
-                  <Bars title={t("chAge")} bars={overdueByAge(loans).map((b) => ({ ...b, label: b.label, display: lakh(b.value) }))} />
+                {totalLoans === 0 ? <p className="body-6">{t("chNoData")}</p> : (
+                  <Bars title={t("chAge")} bars={age.map((b) => ({ ...b, display: lakh(b.value) }))} />
                 )}
                 <p className="caption-5">{t("chAgeDays")}</p>
               </Panel>
@@ -96,7 +96,7 @@ export default function Dashboard() {
                   { key: "broken", label: t("stateBroken"), value: prom.broken, color: "var(--band-high)" },
                 ]} />
                 <ul className="next-list" aria-label={t("nextPromises")}>
-                  {promises.filter((p) => p.state === "open").sort((a, b) => a.promise_date.localeCompare(b.promise_date)).slice(0, 4).map((p) => (
+                  {ins.next_promises.map((p) => (
                     <li key={p.loan_id} className="next-row">
                       <span className="body-5">{p.borrower_name}</span>
                       <span className="caption-5">{p.promise_date}</span>
