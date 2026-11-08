@@ -31,3 +31,6 @@ table.table { width: 100%; border-collapse: collapse; }
   .m-main { padding: var(--s-24) var(--s-16) var(--s-48); }
 }
 .nav-ic { display: inline-flex; align-items: center; gap: var(--s-12); }
+
+.page-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-16); flex-wrap: wrap; }
+.page-head .btn { min-height: 40px; }

@@ -1,9 +1,12 @@
 """Read side for the field officer: only loans actively assigned to them."""
+from datetime import datetime, time
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.domain.contact_window import IST
 from app.domain.scoring import band
-from app.models import Assignment, Loan, Promise, ScoreSnapshot, User
+from app.models import Assignment, Loan, Outcome, Promise, ScoreSnapshot, User
 from app.schemas.officer import LoanDetailOut, LoanRowOut, PromiseOut, ReasonOut
 
 
@@ -15,13 +18,22 @@ def _latest_scores(db: Session, loan_ids: list[str]) -> dict[str, ScoreSnapshot]
     return {s.loan_id: s for s in rows}  # later rows overwrite earlier ones
 
 
-def my_loans(db: Session, officer: User) -> list[LoanRowOut]:
+def _visited_today(db: Session, officer: User, now: datetime) -> set[str]:
+    """Loans this officer has logged an outcome for since midnight IST (server clock)."""
+    midnight = datetime.combine(now.astimezone(IST).date(), time.min, tzinfo=IST)
+    return set(db.scalars(
+        select(Outcome.loan_id).where(Outcome.officer_id == officer.id, Outcome.received_at >= midnight)
+    ))
+
+
+def my_loans(db: Session, officer: User, now: datetime) -> list[LoanRowOut]:
     pairs = db.execute(
         select(Loan, Assignment.manual_rank)
         .join(Assignment, Assignment.loan_id == Loan.loan_id)
         .where(Assignment.officer_id == officer.id, Assignment.active, Loan.status == "open")
     ).all()
     scores = _latest_scores(db, [l.loan_id for l, _ in pairs])
+    visited = _visited_today(db, officer, now)
     rows = []
     for loan, rank in pairs:
         snap = scores.get(loan.loan_id)
@@ -29,9 +41,10 @@ def my_loans(db: Session, officer: User) -> list[LoanRowOut]:
         rows.append((rank, score, LoanRowOut(
             loan_id=loan.loan_id, borrower_name=loan.borrower_name,
             outstanding=loan.outstanding, dpd=loan.dpd,
-            band=band(score), score=score)))
-    # manager's manual order first (lowest rank number), then highest score
-    rows.sort(key=lambda r: (r[0] is None, r[0] if r[0] is not None else 0, -r[1]))
+            band=band(score), score=score,
+            visited_today=loan.loan_id in visited)))
+    # not-yet-visited first, then the manager's manual order (lowest rank number), then highest score
+    rows.sort(key=lambda r: (r[2].visited_today, r[0] is None, r[0] if r[0] is not None else 0, -r[1]))
     return [r[2] for r in rows]
 
 

@@ -1,3 +1,6 @@
+import uuid
+from datetime import datetime, timezone
+
 from app.tests.conftest import login
 
 
@@ -17,13 +20,29 @@ def test_list_row_has_name_dpd_band_and_no_phone(client, officer):
     rows = client.get("/my/loans", headers=officer).json()
     assert rows
     row = rows[0]
-    assert set(row) == {"loan_id", "borrower_name", "outstanding", "dpd", "band", "score"}  # still no phone
+    assert set(row) == {"loan_id", "borrower_name", "outstanding", "dpd", "band", "score", "visited_today"}  # still no phone
     assert row["band"] in {"high", "medium", "low"}
 
 
 def test_list_is_sorted_by_score_highest_first(client, officer):
-    scores = [l["score"] for l in client.get("/my/loans", headers=officer).json()]
-    assert scores == sorted(scores, reverse=True)
+    rows = client.get("/my/loans", headers=officer).json()
+    pending = [l["score"] for l in rows if not l["visited_today"]]
+    assert pending == sorted(pending, reverse=True)
+
+
+def test_visited_loans_move_to_the_bottom(client, officer):
+    """Officer logs an outcome for the top loan; it drops below the not-yet-visited ones."""
+    rows = client.get("/my/loans", headers=officer).json()
+    top = rows[0]["loan_id"]
+    res = client.post("/outcomes/batch", headers=officer, json={"items": [{
+        "client_id": str(uuid.uuid4()), "loan_id": top, "result": "unreachable",
+        "occurred_at": datetime.now(timezone.utc).isoformat(),
+    }]})
+    assert res.status_code == 200 and res.json()["results"][0]["status"] == "created"
+    after = client.get("/my/loans", headers=officer).json()
+    flags = [r["visited_today"] for r in after]
+    assert flags == sorted(flags)  # every unvisited row comes before every visited row
+    assert next(r for r in after if r["loan_id"] == top)["visited_today"] is True
 
 
 def test_detail_of_own_loan_has_reasons_and_promise(client, officer):

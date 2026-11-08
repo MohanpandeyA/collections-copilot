@@ -6,12 +6,12 @@ import * as officerApi from "../officer/api";
 import { json, mockFetch, renderApp } from "./render";
 
 const LIST_FIXTURE = [
-  { loan_id: "L-1", borrower_name: "Meena Devi", outstanding: "45000.00", dpd: 62, band: "high", score: 81 },
-  { loan_id: "L-2", borrower_name: "Ravi Kumar", outstanding: "12000.00", dpd: 18, band: "low", score: 22 },
+  { loan_id: "L-1", borrower_name: "Meena Devi", outstanding: "45000.00", dpd: 62, band: "high", score: 81, visited_today: false },
+  { loan_id: "L-2", borrower_name: "Ravi Kumar", outstanding: "12000.00", dpd: 18, band: "low", score: 22, visited_today: false },
 ];
 const LOANS = [
-  { loan_id: "L-1", borrower_name: "Meena Devi", outstanding: "45000.00", dpd: 62, band: "high", score: 81 },
-  { loan_id: "L-2", borrower_name: "Ravi Kumar", outstanding: "12000.00", dpd: 18, band: "low", score: 22 },
+  { loan_id: "L-1", borrower_name: "Meena Devi", outstanding: "45000.00", dpd: 62, band: "high", score: 81, visited_today: false },
+  { loan_id: "L-2", borrower_name: "Ravi Kumar", outstanding: "12000.00", dpd: 18, band: "low", score: 22, visited_today: false },
 ];
 const DETAIL = {
   loan_id: "L-1", borrower_name: "Meena Devi", phone: "9876500001", pincode: "110001",
@@ -32,6 +32,18 @@ describe("officer list", () => {
     expect(within(row).getByText("62 days overdue")).toBeInTheDocument();
     expect(within(row).getByRole("img", { name: "High priority" })).toBeInTheDocument();
     expect(screen.getByText("2 loans to visit today")).toBeInTheDocument();
+  });
+
+  it("moves loans already visited today under a Done today heading and leaves them out of the count", async () => {
+    mockFetch(() => json([{ ...LOANS[0], visited_today: true }, LOANS[1]]));
+    renderApp("/officer");
+    await screen.findByText("Ravi Kumar");
+    expect(screen.getByText("1 loans to visit today")).toBeInTheDocument();
+    const heading = screen.getByRole("heading", { name: /Done today/ });
+    const links = screen.getAllByRole("link").filter((a) => a.getAttribute("href")?.startsWith("/officer/loans/"));
+    expect(links.map((a) => a.textContent)).toEqual([expect.stringContaining("Ravi Kumar"), expect.stringContaining("Meena Devi")]);
+    expect(heading.compareDocumentPosition(links[1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(links[1]).getByText("Visited")).toBeInTheDocument();
   });
 
   it("sends the bearer token", async () => {

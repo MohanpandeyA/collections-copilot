@@ -92,8 +92,8 @@ Quick tour: sign in as `manager_central` to see the dashboard, loans, promises, 
 ## 5. Tests
 
 ```bash
-cd backend && .venv/bin/python -m pytest        # 133 tests
-cd frontend && npx vitest run                   # 69 tests
+cd backend && .venv/bin/python -m pytest        # 134 tests
+cd frontend && npx vitest run                   # 72 tests
 cd frontend && npx tsc -b                       # type check
 ```
 

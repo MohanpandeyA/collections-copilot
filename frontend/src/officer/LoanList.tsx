@@ -7,8 +7,8 @@ import { inr, lakh } from "../format";
 import { useT } from "../i18n/useT";
 import type { StringKey } from "../i18n/strings";
 import { StackBar } from "../charts/Charts";
-import { fetchLoans, type Band } from "./api";
-import { bandTotals, dpdFill, filterVisits, totalOutstanding } from "./list";
+import { fetchLoans, type Band, type LoanRow } from "./api";
+import { bandTotals, dpdFill, filterVisits, splitVisited, totalOutstanding } from "./list";
 import "../charts/Charts.css";
 
 export const BAND_LABEL: Record<Band, StringKey> = { high: "bandHigh", medium: "bandMedium", low: "bandLow" };
@@ -22,13 +22,15 @@ export default function LoanList() {
   const [query, setQuery] = useState("");
   const rows = state.status === "ready" ? state.data : [];
   const shown = useMemo(() => filterVisits(rows, band, query), [rows, band, query]);
-  const totals = bandTotals(rows);
+  const { todo, done } = useMemo(() => splitVisited(shown), [shown]);
+  const totals = bandTotals(rows.filter((r) => !r.visited_today));
+  const left = rows.filter((r) => !r.visited_today);
 
   return (
     <Page>
       <div>
         <h1 className="heading-5">{t("officerHome")}</h1>
-        {state.status === "ready" && rows.length > 0 && <p className="caption-5">{rows.length} {t("visitsCount")}</p>}
+        {state.status === "ready" && rows.length > 0 && <p className="caption-5">{left.length} {t("visitsCount")}</p>}
       </div>
 
       {state.status === "loading" && <SkeletonRows />}
@@ -42,7 +44,7 @@ export default function LoanList() {
               <span className="hero-icon"><Icon name="hand-coins" size={24} /></span>
               <div>
                 <p className="caption-5">{t("toRecover")}</p>
-                <p className="heading-5 hero-n">{lakh(totalOutstanding(rows))}</p>
+                <p className="heading-5 hero-n">{lakh(totalOutstanding(left))}</p>
               </div>
             </div>
             <StackBar title={t("officerHome")} parts={BANDS.map((b) => ({
@@ -51,7 +53,7 @@ export default function LoanList() {
           </section>
 
           <div className="chips" role="group" aria-label={t("officerHome")}>
-            <button className="chip" aria-pressed={band === ""} onClick={() => setBand("")}>{t("allStates")} <span className="chip-n">{rows.length}</span></button>
+            <button className="chip" aria-pressed={band === ""} onClick={() => setBand("")}>{t("allStates")} <span className="chip-n">{left.length}</span></button>
             {BANDS.map((b) => (
               <button key={b} className="chip" aria-pressed={band === b} onClick={() => setBand(band === b ? "" : b)}>
                 <span className={`dot dot-${b}`} aria-hidden="true" />{t(BAND_SHORT[b])} <span className="chip-n">{totals[b]}</span>
@@ -72,27 +74,42 @@ export default function LoanList() {
               <button className="btn btn-quiet" onClick={() => { setQuery(""); setBand(""); }}>{t("clearFilters")}</button>
             </div>
           ) : (
-            <ul className="list" style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {shown.map((l, i) => (
-                <li key={l.loan_id} className="row-in" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
-                  <Link className={`card row row-${l.band}`} to={`/officer/loans/${encodeURIComponent(l.loan_id)}`}>
-                    <span className={`dot dot-${l.band}`} role="img" aria-label={t(BAND_LABEL[l.band])} />
-                    <span className="row-main">
-                      <span className="body-3 row-name" style={{ display: "block", fontWeight: 500 }}>{l.borrower_name}</span>
-                      <span className="caption-5">{l.dpd} {t("dpdDays")}</span>
-                      <span className="meter" aria-hidden="true"><span className={`meter-fill dot-${l.band}`} style={{ width: `${dpdFill(l.dpd)}%` }} /></span>
-                    </span>
-                    <span className="row-side">
-                      <span className="body-5">{inr(l.outstanding)}</span>
-                      <Icon name="caret-right" size={18} />
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              <LoanRows rows={todo} t={t} />
+              {done.length > 0 && (
+                <>
+                  <h2 className="body-5 done-h">{t("doneToday")} <span className="chip-n">{done.length}</span></h2>
+                  <LoanRows rows={done} t={t} />
+                </>
+              )}
+            </>
           )}
         </>
       )}
     </Page>
+  );
+}
+
+function LoanRows({ rows, t }: { rows: LoanRow[]; t: ReturnType<typeof useT>["t"] }) {
+  return (
+    <ul className="list" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+      {rows.map((l, i) => (
+        <li key={l.loan_id} className="row-in" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+          <Link className={`card row row-${l.band}${l.visited_today ? " row-done" : ""}`} to={`/officer/loans/${encodeURIComponent(l.loan_id)}`}>
+            <span className={`dot dot-${l.band}`} role="img" aria-label={t(BAND_LABEL[l.band])} />
+            <span className="row-main">
+              <span className="body-3 row-name" style={{ display: "block", fontWeight: 500 }}>{l.borrower_name}</span>
+              <span className="caption-5">{l.dpd} {t("dpdDays")}</span>
+              <span className="meter" aria-hidden="true"><span className={`meter-fill dot-${l.band}`} style={{ width: `${dpdFill(l.dpd)}%` }} /></span>
+            </span>
+            <span className="row-side">
+              {l.visited_today && <span className="pill-done caption-3"><Icon name="check-circle" size={16} />{t("visitedTag")}</span>}
+              <span className="body-5">{inr(l.outstanding)}</span>
+              <Icon name="caret-right" size={18} />
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

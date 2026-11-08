@@ -120,7 +120,8 @@ def test_rank_moves_loan_to_top_of_officers_list_and_can_be_cleared(client, mana
         assert client.get("/my/loans", headers=officer).json()[0]["loan_id"] == lid
     finally:
         assert client.put(f"/manager/loans/{lid}/rank", headers=manager, json={"rank": None}).status_code == 200
-    scores = [l["score"] for l in client.get("/my/loans", headers=officer).json()]
+    rows = client.get("/my/loans", headers=officer).json()
+    scores = [l["score"] for l in rows if not l["visited_today"]]  # visited loans sit at the bottom
     assert scores == sorted(scores, reverse=True)
 
 

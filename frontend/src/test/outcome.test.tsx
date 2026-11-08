@@ -92,4 +92,19 @@ describe("outcome logging", () => {
     await user.click(screen.getByRole("button", { name: "Dismiss" }));
     await waitFor(() => expect(screen.queryByText(/loan not assigned to you/)).not.toBeInTheDocument());
   });
+
+  it("fast repeat taps on Paid save one outcome, and the buttons stay hidden until the officer asks to log another", async () => {
+    const f = server(() => true);
+    const user = userEvent.setup();
+    renderApp("/officer/loans/L-1");
+    const paid = await screen.findByRole("button", { name: "Paid" });
+    await user.dblClick(paid);
+    await user.click(paid).catch(() => undefined);
+    await waitFor(() => expect(batchBodies(f)).toHaveLength(1));
+    expect(screen.queryByRole("button", { name: "Paid" })).not.toBeInTheDocument();
+    expect(await screen.findByText(/Saved on this phone/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Log another outcome" }));
+    expect(await screen.findByRole("button", { name: "Paid" })).toBeInTheDocument();
+    expect(batchBodies(f)).toHaveLength(1);
+  });
 });

@@ -110,6 +110,19 @@ describe("activity", () => {
     renderApp("/manager/activity");
     expect(await screen.findByRole("cell", { name: "Paid" })).toBeInTheDocument();
   });
+
+  it("Refresh fetches the feed again and shows rows logged since", async () => {
+    const row = (id: string, who: string) => ({ client_id: id, loan_id: "L-1", borrower_name: who, officer_name: "Rahul", result: "paid", occurred_at: "2026-11-07T05:00:00Z", note: null });
+    let calls = 0;
+    mockFetch(() => json(++calls === 1 ? [row("c1", "Meena Devi")] : [row("c1", "Meena Devi"), row("c2", "Ravi Kumar")]));
+    const user = userEvent.setup();
+    renderApp("/manager/activity");
+    await screen.findByText("Meena Devi");
+    expect(screen.queryByText("Ravi Kumar")).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Refresh" }));
+    expect(await screen.findByText("Ravi Kumar")).toBeInTheDocument();
+    expect(calls).toBe(2);
+  });
 });
 
 describe("loans and manual rank", () => {

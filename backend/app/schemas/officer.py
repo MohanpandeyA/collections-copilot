@@ -11,6 +11,7 @@ class LoanRowOut(BaseModel):
     dpd: int
     band: str
     score: float
+    visited_today: bool = False
 
 
 class ReasonOut(BaseModel):

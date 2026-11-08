@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { currentPosition } from "../outbox/geo";
 import { useOutbox } from "../outbox/OutboxContext";
 import type { OutcomeResult } from "../outbox/types";
@@ -25,18 +25,26 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  // A ref, not state: state updates after a render, so two quick taps could both get through.
+  const busy = useRef(false);
 
   async function save(result: OutcomeResult, extra: { promise_date?: string; promise_amount?: string } = {}) {
+    if (busy.current) return;
+    busy.current = true;
     setSaving(true);
-    const pos = await currentPosition();
-    await enqueue({ loan_id: loanId, result, lat: pos?.lat, lng: pos?.lng, ...extra });
-    setSaving(false);
-    setAsking(false); setDate(""); setAmount(""); setError(false);
-    setSaved(true);
+    try {
+      const pos = await currentPosition();
+      await enqueue({ loan_id: loanId, result, lat: pos?.lat, lng: pos?.lng, ...extra });
+      setAsking(false); setDate(""); setAmount(""); setError(false);
+      setSaved(true);
+    } finally {
+      busy.current = false;
+      setSaving(false);
+    }
   }
 
   function choose(result: OutcomeResult) {
-    setSaved(false);
+    if (busy.current) return;
     if (result === "promise") setAsking(true);
     else void save(result);
   }
@@ -50,7 +58,7 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
   return (
     <section aria-labelledby="log-h" className="outcome">
       <h2 id="log-h" className="body-5">{t("logOutcome")}</h2>
-      {!asking && (
+      {!asking && !saved && (
         <div className="outcome-grid">
           {CHOICES.map((c) => (
             <button key={c.result} className={`btn btn-tint tint-${c.result}`} disabled={saving} onClick={() => choose(c.result)}>
@@ -70,7 +78,12 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
           <button className="btn btn-quiet" type="button" onClick={() => { setAsking(false); setError(false); }}>{t("cancel")}</button>
         </form>
       )}
-      {saved && <p className="body-5" role="status" style={{ color: "var(--accent-text)" }}>{t("savedLocal")}</p>}
+      {saved && (
+        <>
+          <p className="body-5" role="status" style={{ color: "var(--accent-text)" }}>{t("savedLocal")}</p>
+          <button className="btn btn-quiet" onClick={() => setSaved(false)}>{t("logAnother")}</button>
+        </>
+      )}
     </section>
   );
 }

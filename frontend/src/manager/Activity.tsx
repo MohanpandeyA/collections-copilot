@@ -14,7 +14,10 @@ export default function Activity() {
   const { state, reload } = useResource(fetchActivity);
   return (
     <>
-      <h1 className="heading-5">{t("navActivity")}</h1>
+      <div className="page-head">
+        <h1 className="heading-5">{t("navActivity")}</h1>
+        <button className="btn btn-quiet" onClick={reload} disabled={state.status === "loading"}>{t("refresh")}</button>
+      </div>
       {state.status === "loading" && <SkeletonRows />}
       {state.status === "error" && <ErrorState onRetry={reload} />}
       {state.status === "ready" && state.data.length === 0 && <EmptyState title={t("noActivity")} body={t("noActivityBody")} />}

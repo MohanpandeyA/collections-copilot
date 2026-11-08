@@ -15,3 +15,9 @@ export function filterVisits(rows: LoanRow[], band: Band | "", query: string) {
 
 /** 0 to 100, where 90 or more days overdue fills the bar. Only for the picture; the number beside it is exact. */
 export const dpdFill = (dpd: number) => Math.min(Math.max(dpd, 0), 90) / 90 * 100;
+
+/** Splits the list into loans still to visit and loans already logged today. Order inside each part is kept. */
+export const splitVisited = (rows: LoanRow[]) => ({
+  todo: rows.filter((r) => !r.visited_today),
+  done: rows.filter((r) => r.visited_today),
+});
