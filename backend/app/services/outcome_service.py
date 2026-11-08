@@ -1,7 +1,7 @@
 """Record outcomes from the officer's phone. Each item stands alone: its own
 validation, its own savepoint, its own result, so one bad item never blocks the rest."""
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 
 from sqlalchemy import func, select
@@ -105,6 +105,28 @@ def _apply_payment(loan: Loan, amount: Decimal, paid_at: datetime) -> None:
         loan.status, loan.dpd = "closed", 0
 
 
+REPEAT_WINDOW = timedelta(seconds=30)
+
+
+def _is_repeat(db: Session, officer: User, item: OutcomeIn, parsed: dict) -> bool:
+    """Same officer, loan and result within 30 seconds, with the same money, is a double tap that got
+    a fresh client_id (an old app version, a second phone). A different amount or promise is a real
+    second event, so it is kept."""
+    at = parsed["occurred_at"]
+    q = select(Outcome).where(
+        Outcome.loan_id == item.loan_id, Outcome.officer_id == officer.id, Outcome.result == item.result,
+        Outcome.occurred_at >= at - REPEAT_WINDOW, Outcome.occurred_at <= at + REPEAT_WINDOW)
+    for other in db.scalars(q):
+        if other.amount_received != parsed["amount"]:
+            continue
+        if parsed["promise"]:
+            p = db.scalar(select(Promise).where(Promise.outcome_id == other.client_id))
+            if p is None or (p.promise_date, p.amount) != parsed["promise"]:
+                continue
+        return True
+    return False
+
+
 def _save(db: Session, officer: User, item: OutcomeIn) -> str:
     parsed = _parse(item)
     existing = db.get(Outcome, parsed["client_id"])
@@ -117,6 +139,8 @@ def _save(db: Session, officer: User, item: OutcomeIn) -> str:
     loan = db.get(Loan, item.loan_id)
     if parsed["amount"] is not None and parsed["amount"] > loan.outstanding:
         raise Rejected("amount_received is more than the outstanding balance")
+    if _is_repeat(db, officer, item, parsed):
+        return "duplicate"
 
     db.add(Outcome(
         client_id=parsed["client_id"], loan_id=item.loan_id, officer_id=officer.id,

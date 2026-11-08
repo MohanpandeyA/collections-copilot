@@ -245,3 +245,67 @@ def test_activity_shows_amount_received(client, officer, manager, loan_id):
     post(client, officer, item(loan_id, "paid", amount_received="12500"))
     row = next(a for a in client.get("/manager/activity", headers=manager).json() if a["loan_id"] == loan_id)
     assert float(row["amount_received"]) == 12500.0
+
+
+# --- double taps that arrive with a fresh client_id ----------------------------------
+
+def _count(loan_id, result=None):
+    with SessionLocal() as db:
+        q = select(func.count()).select_from(Outcome).where(Outcome.loan_id == loan_id)
+        if result:
+            q = q.where(Outcome.result == result)
+        return db.scalar(q)
+
+
+def _at(seconds):
+    return (datetime(2026, 11, 7, 12, 0, tzinfo=IST) + timedelta(seconds=seconds)).isoformat()
+
+
+def test_same_result_twice_within_30_seconds_is_saved_once(client, officer, loan_id):
+    first = post(client, officer, item(loan_id, "unreachable", _at(0))).json()["results"][0]
+    again = post(client, officer, item(loan_id, "unreachable", _at(10))).json()["results"][0]
+    assert (first["status"], again["status"]) == ("created", "duplicate")
+    assert _count(loan_id) == 1
+
+
+def test_repeat_inside_one_batch_is_saved_once(client, officer, loan_id):
+    res = post(client, officer, item(loan_id, "dispute", _at(0)), item(loan_id, "dispute", _at(2)))
+    assert [r["status"] for r in res.json()["results"]] == ["created", "duplicate"]
+    assert _count(loan_id) == 1
+
+
+def test_a_repeat_does_not_touch_the_contact_log(client, officer, loan_id):
+    post(client, officer, item(loan_id, "unreachable", _at(0)))
+    post(client, officer, item(loan_id, "unreachable", _at(5)))
+    with SessionLocal() as db:
+        assert db.scalar(select(func.count()).select_from(ContactAttempt).where(ContactAttempt.loan_id == loan_id)) == 1
+
+
+def test_repeat_payment_is_not_taken_off_the_balance_twice(client, officer, loan_id):
+    post(client, officer, item(loan_id, "paid", _at(0), amount_received="1000"))
+    again = post(client, officer, item(loan_id, "paid", _at(8), amount_received="1000")).json()["results"][0]
+    assert again["status"] == "duplicate"
+    assert loan_state(loan_id)[1] == 79000.0
+
+
+def test_a_visit_30_seconds_apart_or_later_is_a_new_visit(client, officer, loan_id):
+    post(client, officer, item(loan_id, "unreachable", _at(0)))
+    later = post(client, officer, item(loan_id, "unreachable", _at(31))).json()["results"][0]
+    assert later["status"] == "created"
+    assert _count(loan_id) == 2
+
+
+def test_different_result_or_amount_is_never_a_repeat(client, officer, loan_id):
+    post(client, officer, item(loan_id, "unreachable", _at(0)))
+    res = post(client, officer, item(loan_id, "dispute", _at(3)),
+               item(loan_id, "paid", _at(4), amount_received="500"),
+               item(loan_id, "paid", _at(5), amount_received="700"))
+    assert [r["status"] for r in res.json()["results"]] == ["created"] * 3
+
+
+def test_two_promises_with_different_terms_are_both_kept(client, officer, loan_id):
+    a = post(client, officer, item(loan_id, "promise", _at(0), promise_date="2026-11-20", promise_amount="5000")).json()
+    b = post(client, officer, item(loan_id, "promise", _at(4), promise_date="2026-11-25", promise_amount="5000")).json()
+    c = post(client, officer, item(loan_id, "promise", _at(6), promise_date="2026-11-25", promise_amount="5000")).json()
+    assert [x["results"][0]["status"] for x in (a, b, c)] == ["created", "created", "duplicate"]
+
