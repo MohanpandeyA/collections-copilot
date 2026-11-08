@@ -257,13 +257,13 @@ Each item gets its own status, so one bad item never blocks the rest of the batc
 ```mermaid
 flowchart TD
     A([Officer taps Call or Send reminder]) --> B[Server converts now to IST]
-    B --> C{08:00 <= time < 19:00?}
+    B --> C{Time between 08:00 and 19:00?}
     C -->|Yes| D[Allow]
     C -->|No| E[Block with reason]
     D --> F[(Write contact_attempt allowed=true)]
     E --> G[(Write contact_attempt allowed=false)]
     F --> H([Open dialler / allow send])
-    G --> I([Show "contact not permitted until 8 am"])
+    G --> I([Show: contact not permitted until 8 am])
 ```
 
 The server clock decides, never the phone clock. Blocked attempts are recorded too.
