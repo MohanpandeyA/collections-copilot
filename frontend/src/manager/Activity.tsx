@@ -2,6 +2,7 @@ import { useResource } from "../api/useResource";
 import { EmptyState, ErrorState, SkeletonRows } from "../components/States";
 import { useT } from "../i18n/useT";
 import type { StringKey } from "../i18n/strings";
+import { inr } from "../format";
 import { fetchActivity } from "./api";
 
 const RESULT: Record<string, StringKey> = {
@@ -28,7 +29,7 @@ export default function Activity() {
             <tbody>{state.data.map((a) => (
               <tr key={a.client_id}>
                 <td>{when(a.occurred_at)}</td><td>{a.officer_name}</td><td>{a.borrower_name}</td>
-                <td>{RESULT[a.result] ? t(RESULT[a.result]) : a.result}{a.note && <span className="caption-5"> · {a.note}</span>}</td>
+                <td>{RESULT[a.result] ? t(RESULT[a.result]) : a.result}{a.amount_received && <span className="caption-5"> · {inr(a.amount_received)}</span>}{a.note && <span className="caption-5"> · {a.note}</span>}</td>
               </tr>
             ))}</tbody>
           </table>

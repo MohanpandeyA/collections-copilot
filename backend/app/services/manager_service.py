@@ -85,7 +85,8 @@ def activity(db: Session, manager: User, limit: int = 100) -> list[ActivityRow]:
          .where(Loan.branch_id == manager.branch_id)
          .order_by(Outcome.occurred_at.desc(), Outcome.received_at.desc()).limit(limit))
     return [ActivityRow(client_id=str(o.client_id), loan_id=l.loan_id, borrower_name=l.borrower_name,
-                        officer_name=u.full_name, result=o.result, occurred_at=o.occurred_at, note=o.note)
+                        officer_name=u.full_name, result=o.result, occurred_at=o.occurred_at, note=o.note,
+                        amount_received=o.amount_received)
             for o, l, u in db.execute(q).all()]
 
 

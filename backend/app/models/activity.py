@@ -22,6 +22,7 @@ class Outcome(Base):
             "result in ('paid','promise','unreachable','dispute')", name="ck_outcome_result"
         ),
         CheckConstraint("lat between -90 and 90 and lng between -180 and 180", name="ck_outcome_geo"),
+        CheckConstraint("amount_received is null or amount_received > 0", name="ck_outcome_amount"),
         Index("ix_outcome_loan_time", "loan_id", "occurred_at"),
     )
 
@@ -36,6 +37,8 @@ class Outcome(Base):
         DateTime(timezone=True), server_default=func.now()
     )  # server time
     note: Mapped[str | None] = mapped_column(Text)
+    # Rupees collected, set only on a paid outcome. Null on older rows and unpaid results.
+    amount_received: Mapped[Decimal | None] = mapped_column(Numeric(14, 2))
 
 
 class Promise(Base):

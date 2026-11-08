@@ -15,11 +15,14 @@ const CHOICES: { result: OutcomeResult; label: StringKey; icon: IconName }[] = [
 
 const todayIso = () => new Date().toISOString().slice(0, 10);
 
-/** Tap 1: pick the result. Paid / unreachable / dispute save straight away. A promise asks for date and amount. */
-export default function OutcomePanel({ loanId }: { loanId: string }) {
+type Extra = { promise_date?: string; promise_amount?: string; amount_received?: string };
+
+/** Tap 1: pick the result. Unreachable / dispute save straight away. Paid asks for the amount received
+ *  (pre-filled with the full balance) and a promise asks for date and amount. */
+export default function OutcomePanel({ loanId, outstanding }: { loanId: string; outstanding: string }) {
   const { t } = useT();
   const { enqueue } = useOutbox();
-  const [asking, setAsking] = useState(false);
+  const [asking, setAsking] = useState<"paid" | "promise" | null>(null);
   const [date, setDate] = useState("");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState(false);
@@ -28,14 +31,14 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
   // A ref, not state: state updates after a render, so two quick taps could both get through.
   const busy = useRef(false);
 
-  async function save(result: OutcomeResult, extra: { promise_date?: string; promise_amount?: string } = {}) {
+  async function save(result: OutcomeResult, extra: Extra = {}) {
     if (busy.current) return;
     busy.current = true;
     setSaving(true);
     try {
       const pos = await currentPosition();
       await enqueue({ loan_id: loanId, result, lat: pos?.lat, lng: pos?.lng, ...extra });
-      setAsking(false); setDate(""); setAmount(""); setError(false);
+      setAsking(null); setDate(""); setAmount(""); setError(false);
       setSaved(true);
     } finally {
       busy.current = false;
@@ -45,8 +48,16 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
 
   function choose(result: OutcomeResult) {
     if (busy.current) return;
-    if (result === "promise") setAsking(true);
+    if (result === "promise") setAsking("promise");
+    else if (result === "paid") { setAmount(Number(outstanding).toFixed(2)); setAsking("paid"); }
     else void save(result);
+  }
+
+  function submitPaid(e: FormEvent) {
+    e.preventDefault();
+    const n = Number(amount);
+    if (!(n > 0) || n > Number(outstanding)) { setError(true); return; }
+    void save("paid", { amount_received: n.toFixed(2) });
   }
 
   function submitPromise(e: FormEvent) {
@@ -58,7 +69,7 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
   return (
     <section aria-labelledby="log-h" className="outcome">
       <h2 id="log-h" className="body-5">{t("logOutcome")}</h2>
-      {!asking && !saved && (
+      {asking === null && !saved && (
         <div className="outcome-grid">
           {CHOICES.map((c) => (
             <button key={c.result} className={`btn btn-tint tint-${c.result}`} disabled={saving} onClick={() => choose(c.result)}>
@@ -67,7 +78,16 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
           ))}
         </div>
       )}
-      {asking && (
+      {asking === "paid" && (
+        <form className="outcome-form" onSubmit={submitPaid} noValidate>
+          <label className="body-5" htmlFor="p-recv">{t("amountReceived")}</label>
+          <input id="p-recv" className="input" type="number" inputMode="decimal" min="1" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+          {error && <p className="alert-error body-5" role="alert">{t("needAmount")}</p>}
+          <button className="btn" type="submit" disabled={saving}>{t("confirmPaid")}</button>
+          <button className="btn btn-quiet" type="button" onClick={() => { setAsking(null); setError(false); }}>{t("cancel")}</button>
+        </form>
+      )}
+      {asking === "promise" && (
         <form className="outcome-form" onSubmit={submitPromise} noValidate>
           <label className="body-5" htmlFor="p-date">{t("promiseDate")}</label>
           <input id="p-date" className="input" type="date" min={todayIso()} value={date} onChange={(e) => setDate(e.target.value)} />
@@ -75,7 +95,7 @@ export default function OutcomePanel({ loanId }: { loanId: string }) {
           <input id="p-amt" className="input" type="number" inputMode="decimal" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
           {error && <p className="alert-error body-5" role="alert">{t("needDate")}</p>}
           <button className="btn" type="submit" disabled={saving}>{t("saveOutcome")}</button>
-          <button className="btn btn-quiet" type="button" onClick={() => { setAsking(false); setError(false); }}>{t("cancel")}</button>
+          <button className="btn btn-quiet" type="button" onClick={() => { setAsking(null); setError(false); }}>{t("cancel")}</button>
         </form>
       )}
       {saved && (

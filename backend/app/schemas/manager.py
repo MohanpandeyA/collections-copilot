@@ -50,6 +50,7 @@ class ActivityRow(BaseModel):
     result: str
     occurred_at: datetime
     note: str | None
+    amount_received: Decimal | None = None
 
 
 class ManagerLoanRow(BaseModel):

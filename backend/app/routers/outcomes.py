@@ -16,8 +16,8 @@ router = APIRouter(tags=["outcomes"])
 
 @router.post("/outcomes/batch", response_model=OutcomeBatchOut)
 def outcomes_batch(body: OutcomeBatchIn, officer: User = Depends(require_officer),
-                   db: Session = Depends(get_db)):
-    return OutcomeBatchOut(results=outcome_service.record_batch(db, officer, body.items))
+                   db: Session = Depends(get_db), now: datetime = Depends(get_now)):
+    return OutcomeBatchOut(results=outcome_service.record_batch(db, officer, body.items, now))
 
 
 @router.post("/contact-attempts", response_model=ContactAttemptOut)

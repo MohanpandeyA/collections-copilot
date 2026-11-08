@@ -7,7 +7,7 @@ import type { OutboxStore, OutcomeResult, QueuedOutcome } from "./types";
 
 export type NewOutcome = {
   loan_id: string; result: OutcomeResult; note?: string;
-  promise_date?: string; promise_amount?: string; lat?: number | null; lng?: number | null;
+  promise_date?: string; promise_amount?: string; amount_received?: string; lat?: number | null; lng?: number | null;
 };
 
 type Ctx = {
@@ -62,6 +62,7 @@ export function OutboxProvider({ children, store, post }: { children: ReactNode;
       client_id: crypto.randomUUID(), loan_id: o.loan_id, result: o.result,
       occurred_at: new Date().toISOString(), lat: o.lat ?? null, lng: o.lng ?? null,
       note: o.note?.trim() || null, promise_date: o.promise_date ?? null, promise_amount: o.promise_amount ?? null,
+      amount_received: o.amount_received ?? null,
       status: "pending", reason: null,
     });
     await refresh();

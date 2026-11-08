@@ -157,3 +157,91 @@ def test_contact_attempt_on_other_officers_loan_is_404(client, officer, fixed_ti
     fixed_time(10)
     res = client.post("/contact-attempts", headers=officer, json={"loan_id": "LN-11930", "channel": "call"})
     assert res.status_code == 404
+
+
+# ---- money: a paid outcome with an amount updates the loan --------------------------------
+
+def loan_state(lid):
+    with SessionLocal() as db:
+        from app.models import Loan
+        l = db.get(Loan, lid)
+        return l.status, float(l.outstanding), l.dpd, l.last_payment_date
+
+
+def test_part_payment_lowers_outstanding_and_keeps_loan_open(client, officer, loan_id):
+    res = post(client, officer, item(loan_id, "paid", amount_received="30000"))
+    assert res.json()["results"][0]["status"] == "created"
+    status, outstanding, dpd, last = loan_state(loan_id)
+    assert (status, outstanding, dpd) == ("open", 50000.0, 15)
+    assert str(last) == "2026-11-07"
+
+
+def test_full_payment_closes_the_loan_and_it_leaves_the_officer_list(client, officer, manager, loan_id):
+    post(client, officer, item(loan_id, "paid", amount_received="80000"))
+    assert loan_state(loan_id)[:3] == ("closed", 0.0, 0)
+    assert loan_id not in [l["loan_id"] for l in client.get("/my/loans", headers=officer).json()]
+    assert loan_id not in [l["loan_id"] for l in client.get("/manager/loans", headers=manager).json()]
+
+
+def test_dashboard_numbers_drop_after_a_payment(client, officer, manager, loan_id):
+    before = client.get("/manager/dashboard", headers=manager).json()
+    post(client, officer, item(loan_id, "paid", amount_received="80000"))
+    after = client.get("/manager/dashboard", headers=manager).json()
+    assert after["open_loans"] == before["open_loans"] - 1
+    assert float(after["overdue_amount"]) == float(before["overdue_amount"]) - 80000
+
+
+def test_cannot_pay_more_than_outstanding(client, officer, loan_id):
+    r = post(client, officer, item(loan_id, "paid", amount_received="80000.01")).json()["results"][0]
+    assert r["status"] == "rejected" and "more than the outstanding" in r["reason"]
+    assert loan_state(loan_id)[1] == 80000.0
+
+
+@pytest.mark.parametrize("bad", ["0", "-5", "abc", "10.123", "NaN"])
+def test_bad_amounts_are_rejected(client, officer, loan_id, bad):
+    r = post(client, officer, item(loan_id, "paid", amount_received=bad)).json()["results"][0]
+    assert r["status"] == "rejected"
+
+
+def test_amount_only_allowed_on_paid(client, officer, loan_id):
+    r = post(client, officer, item(loan_id, "unreachable", amount_received="100")).json()["results"][0]
+    assert r["status"] == "rejected" and "only for a paid" in r["reason"]
+
+
+def test_paid_without_amount_still_works_and_changes_no_balance(client, officer, loan_id):
+    post(client, officer, item(loan_id, "paid"))
+    assert loan_state(loan_id)[:3] == ("open", 80000.0, 15)
+
+
+def test_retried_payment_is_applied_once(client, officer, loan_id):
+    one = item(loan_id, "paid", amount_received="10000")
+    post(client, officer, one)
+    again = post(client, officer, one).json()["results"][0]
+    assert again["status"] == "duplicate"
+    assert loan_state(loan_id)[1] == 70000.0
+
+
+def test_part_payment_below_promise_does_not_keep_it(client, officer, manager, loan_id):
+    post(client, officer, item(loan_id, "promise", promise_date="2026-11-20", promise_amount="50000"))
+    post(client, officer, item(loan_id, "paid", amount_received="20000"))
+    with SessionLocal() as db:
+        assert db.scalar(select(Promise.state).where(Promise.loan_id == loan_id)) == "open"
+    post(client, officer, item(loan_id, "paid", amount_received="30000"))
+    with SessionLocal() as db:
+        assert db.scalar(select(Promise.state).where(Promise.loan_id == loan_id)) == "kept"
+
+
+def test_score_is_recalculated_after_a_payment(client, officer, loan_id):
+    from app.models import ScoreSnapshot
+    post(client, officer, item(loan_id, "paid", amount_received="60000"))
+    with SessionLocal() as db:
+        snap = db.scalars(select(ScoreSnapshot).where(ScoreSnapshot.loan_id == loan_id)
+                          .order_by(ScoreSnapshot.id.desc())).first()
+        assert snap is not None
+        assert any("20,000" in r["text"] or "20000" in r["text"] for r in snap.reasons)
+
+
+def test_activity_shows_amount_received(client, officer, manager, loan_id):
+    post(client, officer, item(loan_id, "paid", amount_received="12500"))
+    row = next(a for a in client.get("/manager/activity", headers=manager).json() if a["loan_id"] == loan_id)
+    assert float(row["amount_received"]) == 12500.0

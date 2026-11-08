@@ -71,6 +71,25 @@ describe("csv import", () => {
     expect((init.headers as Record<string, string>)["Content-Type"]).toBeUndefined();
   });
 
+  it("closing missing loans is off by default and sent only when ticked, and the closed count is shown", async () => {
+    const f = mockFetch(() => json({ batch_id: 1, loaded: 5, assigned: 5, fallback_count: 0, rejected_count: 0, rejected: [], closed: 3 }));
+    const user = userEvent.setup();
+    renderApp("/manager/import");
+    const box = await screen.findByRole("checkbox", { name: /Close loans that are not in this file/ });
+    expect(box).not.toBeChecked();
+    await user.upload(screen.getByLabelText("Choose CSV file"), file());
+    await user.click(screen.getByRole("button", { name: "Upload and assign" }));
+    await screen.findByText("Import finished");
+    expect(String(f.mock.calls[0][0])).not.toContain("close_missing");
+    expect(screen.getByText(/Closed: 3/)).toBeInTheDocument();
+
+    await user.click(box);
+    await user.upload(screen.getByLabelText("Choose CSV file"), file());
+    await user.click(screen.getByRole("button", { name: "Upload and assign" }));
+    await waitFor(() => expect(f.mock.calls).toHaveLength(2));
+    expect(String(f.mock.calls[1][0])).toContain("/manager/imports?close_missing=true");
+  });
+
   it("shows a clear error when the server refuses the file", async () => {
     mockFetch(() => json({ detail: "missing columns" }, 422));
     const user = userEvent.setup();
@@ -109,6 +128,12 @@ describe("activity", () => {
     mockFetch(() => json([{ client_id: "c1", loan_id: "L-1", borrower_name: "Meena Devi", officer_name: "Rahul", result: "paid", occurred_at: "2026-11-07T05:00:00Z", note: null }]));
     renderApp("/manager/activity");
     expect(await screen.findByRole("cell", { name: "Paid" })).toBeInTheDocument();
+  });
+
+  it("shows the amount received next to a payment", async () => {
+    mockFetch(() => json([{ client_id: "c1", loan_id: "L-1", borrower_name: "Meena Devi", officer_name: "Rahul", result: "paid", occurred_at: "2026-11-07T05:00:00Z", note: null, amount_received: "1500.00" }]));
+    renderApp("/manager/activity");
+    expect(await screen.findByText(/₹1,500/)).toBeInTheDocument();
   });
 
   it("Refresh fetches the feed again and shows rows logged since", async () => {

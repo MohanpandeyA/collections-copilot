@@ -9,6 +9,7 @@ export default function ImportPage() {
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
+  const [closeMissing, setCloseMissing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ImportSummary | null>(null);
 
@@ -18,7 +19,7 @@ export default function ImportPage() {
     if (!file.name.toLowerCase().endsWith(".csv")) { setError(t("onlyCsv")); return; }
     setBusy(true); setError(null); setResult(null);
     try {
-      setResult(await uploadCsv(session.token, file));
+      setResult(await uploadCsv(session.token, file, closeMissing));
       setFile(null);
       if (input.current) input.current.value = "";
     } catch {
@@ -34,6 +35,10 @@ export default function ImportPage() {
         <label className="body-5" htmlFor="csv">{t("chooseFile")}</label>
         <input id="csv" ref={input} className="input" type="file" accept=".csv,text/csv"
           onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(null); }} />
+        <label className="body-5" style={{ display: "flex", gap: "var(--s-8)", alignItems: "flex-start" }}>
+          <input type="checkbox" checked={closeMissing} onChange={(e) => setCloseMissing(e.target.checked)} style={{ marginTop: 4 }} />
+          <span>{t("closeMissing")}<span className="caption-5" style={{ display: "block" }}>{t("closeMissingHelp")}</span></span>
+        </label>
         {error && <p className="alert-error body-5" role="alert">{error}</p>}
         <button className="btn" type="submit" disabled={!file || busy}>{busy ? t("uploading") : t("upload")}</button>
       </form>
@@ -44,6 +49,7 @@ export default function ImportPage() {
             {t("loaded")}: {result.loaded} · {t("assigned")}: {result.assigned}
             {result.fallback_count > 0 && ` · ${t("fallback")}: ${result.fallback_count}`}
             {` · ${t("rejected")}: ${result.rejected_count}`}
+            {(result.closed ?? 0) > 0 && ` · ${t("closedCount")}: ${result.closed}`}
           </p>
           {result.rejected.length > 0 && (
             <div className="table-wrap">

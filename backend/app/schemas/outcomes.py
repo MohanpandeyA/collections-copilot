@@ -14,6 +14,7 @@ class OutcomeIn(BaseModel):
     note: str | None = Field(default=None, max_length=500)
     promise_date: str | None = None
     promise_amount: str | None = None
+    amount_received: str | None = None  # rupees collected, paid only
 
 
 class OutcomeBatchIn(BaseModel):

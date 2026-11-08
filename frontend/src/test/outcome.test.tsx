@@ -29,16 +29,46 @@ function server(online: () => boolean) {
 }
 
 describe("outcome logging", () => {
-  it("one tap saves a Paid outcome and syncs it", async () => {
+  it("Paid asks for the amount (pre-filled with the balance), then saves and syncs it", async () => {
     const f = server(() => true);
     const user = userEvent.setup();
     renderApp("/officer/loans/L-1");
     await user.click(await screen.findByRole("button", { name: "Paid" }));
+    const field = screen.getByLabelText("Amount received (Rs)") as HTMLInputElement;
+    expect(Number(field.value)).toBe(Number(DETAIL.outstanding));
+    expect(batchBodies(f)).toHaveLength(0);
+    await user.click(screen.getByRole("button", { name: "Confirm payment" }));
     await waitFor(() => expect(batchBodies(f)).toHaveLength(1));
     const item = batchBodies(f)[0].items[0];
-    expect(item).toMatchObject({ loan_id: "L-1", result: "paid" });
+    expect(item).toMatchObject({ loan_id: "L-1", result: "paid", amount_received: Number(DETAIL.outstanding).toFixed(2) });
     expect(item.client_id).toMatch(/^[0-9a-f-]{36}$/);
     expect(screen.queryByText(/waiting to sync/)).not.toBeInTheDocument();
+  });
+
+  it("a part payment is sent with the smaller amount", async () => {
+    const f = server(() => true);
+    const user = userEvent.setup();
+    renderApp("/officer/loans/L-1");
+    await user.click(await screen.findByRole("button", { name: "Paid" }));
+    const field = screen.getByLabelText("Amount received (Rs)");
+    await user.clear(field);
+    await user.type(field, "1500");
+    await user.click(screen.getByRole("button", { name: "Confirm payment" }));
+    await waitFor(() => expect(batchBodies(f)).toHaveLength(1));
+    expect(batchBodies(f)[0].items[0]).toMatchObject({ result: "paid", amount_received: "1500.00" });
+  });
+
+  it.each([["empty", ""], ["zero", "0"], ["more than the balance", "99999999"]])("Paid rejects an amount that is %s", async (_n, value) => {
+    const f = server(() => true);
+    const user = userEvent.setup();
+    renderApp("/officer/loans/L-1");
+    await user.click(await screen.findByRole("button", { name: "Paid" }));
+    const field = screen.getByLabelText("Amount received (Rs)");
+    await user.clear(field);
+    if (value) await user.type(field, value);
+    await user.click(screen.getByRole("button", { name: "Confirm payment" }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    expect(batchBodies(f)).toHaveLength(0);
   });
 
   it("offline: shows pending, then syncs when back online and clears the badge", async () => {
@@ -97,9 +127,10 @@ describe("outcome logging", () => {
     const f = server(() => true);
     const user = userEvent.setup();
     renderApp("/officer/loans/L-1");
-    const paid = await screen.findByRole("button", { name: "Paid" });
-    await user.dblClick(paid);
-    await user.click(paid).catch(() => undefined);
+    await user.click(await screen.findByRole("button", { name: "Paid" }));
+    const confirm = screen.getByRole("button", { name: "Confirm payment" });
+    await user.dblClick(confirm);
+    await user.click(confirm).catch(() => undefined);
     await waitFor(() => expect(batchBodies(f)).toHaveLength(1));
     expect(screen.queryByRole("button", { name: "Paid" })).not.toBeInTheDocument();
     expect(await screen.findByText(/Saved on this phone/)).toBeInTheDocument();

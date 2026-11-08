@@ -1,3 +1,4 @@
+import pytest
 from sqlalchemy import select
 
 from app.core.database import SessionLocal
@@ -77,3 +78,71 @@ def test_non_csv_binary_is_rejected(client, manager):
     res = client.post("/manager/imports", headers=manager,
                       files={"file": ("x.csv", b"\xff\xfe\x00bad", "text/csv")})
     assert res.status_code == 400
+
+
+# ---- closing loans and roll-rate snapshots ------------------------------------------------
+
+@pytest.fixture()
+def keep_statuses():
+    """close_missing closes whole branches, so put every loan's status back afterwards."""
+    with SessionLocal() as db:
+        before = dict(db.execute(select(Loan.loan_id, Loan.status)).all())
+    yield
+    with SessionLocal() as db:
+        for loan in db.scalars(select(Loan)):
+            if loan.loan_id in before:
+                loan.status = before[loan.loan_id]
+        db.commit()
+
+def test_missing_loans_stay_open_by_default(client, manager):
+    upload(client, manager, HEADER + "LN-C1,Close One,9100000011,452001,50000,10,\nLN-C2,Close Two,9100000012,452001,60000,11,\n")
+    res = upload(client, manager, HEADER + "LN-C1,Close One,9100000011,452001,50000,10,\n")
+    assert res.json()["closed"] == 0
+    with SessionLocal() as db:
+        assert db.get(Loan, "LN-C2").status == "open"
+
+
+def test_close_missing_closes_only_loans_absent_from_the_file(client, manager, keep_statuses):
+    upload(client, manager, HEADER + "LN-C3,Close Three,9100000013,452001,50000,10,\n")
+    res = client.post("/manager/imports?close_missing=true", headers=manager,
+                      files={"file": ("a.csv", HEADER + "LN-C4,Close Four,9100000014,452001,40000,9,\n", "text/csv")})
+    assert res.status_code == 200 and res.json()["closed"] >= 1
+    with SessionLocal() as db:
+        assert db.get(Loan, "LN-C3").status == "closed"
+        assert db.get(Loan, "LN-C4").status == "open"
+
+
+def test_close_missing_does_not_close_a_loan_whose_row_was_rejected(client, manager, keep_statuses):
+    upload(client, manager, HEADER + "LN-C5,Close Five,9100000015,452001,50000,10,\n")
+    bad = HEADER + "LN-C5,Close Five,123,452001,50000,10,\nLN-C6,Close Six,9100000016,452001,1000,3,\n"
+    client.post("/manager/imports?close_missing=true", headers=manager, files={"file": ("a.csv", bad, "text/csv")})
+    with SessionLocal() as db:
+        assert db.get(Loan, "LN-C5").status == "open"
+
+
+def test_close_missing_with_no_valid_rows_closes_nothing(client, manager, keep_statuses):
+    upload(client, manager, HEADER + "LN-C7,Close Seven,9100000017,452001,50000,10,\n")
+    res = client.post("/manager/imports?close_missing=true", headers=manager,
+                      files={"file": ("a.csv", HEADER + "LN-C8,Bad,123,452001,1,1,\n", "text/csv")})
+    assert res.json()["closed"] == 0
+    with SessionLocal() as db:
+        assert db.get(Loan, "LN-C7").status == "open"
+
+
+def test_close_missing_never_touches_another_branch(client, manager, keep_statuses):
+    from app.tests.conftest import login
+    east = login(client, "manager_east")
+    upload(client, east, HEADER + "LN-E1,East One,9100000021,452010,50000,10,\n")
+    client.post("/manager/imports?close_missing=true", headers=manager,
+                files={"file": ("a.csv", HEADER + "LN-C9,Nine,9100000019,452001,1000,3,\n", "text/csv")})
+    with SessionLocal() as db:
+        assert db.get(Loan, "LN-E1").status == "open"
+
+
+def test_import_saves_month_start_snapshot_for_new_loans_once(client, manager):
+    from app.models import LoanSnapshot
+    upload(client, manager, HEADER + "LN-S1,Snap One,9100000031,452001,50000,40,\n")
+    upload(client, manager, HEADER + "LN-S1,Snap One,9100000031,452001,50000,41,\n")
+    with SessionLocal() as db:
+        snaps = db.scalars(select(LoanSnapshot).where(LoanSnapshot.loan_id == "LN-S1")).all()
+        assert len(snaps) == 1

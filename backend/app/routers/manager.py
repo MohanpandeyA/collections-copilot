@@ -31,6 +31,7 @@ MAX_BYTES = 2 * 1024 * 1024  # 5,000 rows is well under 1 MB; this stops abuse
 @router.post("/imports", response_model=ImportSummary)
 async def import_overdue(
     file: UploadFile = File(...),
+    close_missing: bool = Query(False),
     manager: User = Depends(require_manager),
     db: Session = Depends(get_db),
 ):
@@ -44,7 +45,7 @@ async def import_overdue(
     parsed = parse_csv(text)
     if parsed.file_error:
         raise HTTPException(400, parsed.file_error)
-    return run_import(db, manager, parsed, date.today())
+    return run_import(db, manager, parsed, date.today(), close_missing=close_missing)
 
 
 @router.get("/dashboard", response_model=DashboardOut)

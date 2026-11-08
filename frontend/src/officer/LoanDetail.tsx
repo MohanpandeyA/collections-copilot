@@ -95,7 +95,7 @@ export default function LoanDetail() {
               </ol>
             </section>
 
-            <OutcomePanel loanId={d.loan_id} />
+            <OutcomePanel loanId={d.loan_id} outstanding={d.outstanding} />
             <ReminderPanel loanId={d.loan_id} />
             <div className="actions">
               <button className="btn" onClick={() => onCall(d.phone)} disabled={calling}>

@@ -10,6 +10,7 @@ export type QueuedOutcome = {
   note: string | null;
   promise_date: string | null;
   promise_amount: string | null;
+  amount_received?: string | null; // rupees collected, paid only
   status: "pending" | "failed";
   reason: string | null; // why the server rejected it
 };

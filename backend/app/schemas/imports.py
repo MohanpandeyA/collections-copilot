@@ -13,4 +13,5 @@ class ImportSummary(BaseModel):
     assigned: int
     fallback_count: int
     rejected_count: int
+    closed: int = 0
     rejected: list[RejectedOut]
