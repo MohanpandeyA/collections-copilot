@@ -111,7 +111,13 @@ The repo has a `render.yaml` blueprint and a `backend/Dockerfile`. The setup is 
 6. **Demo data.** The container applies migrations on every start but does not seed. Run the seed once from your own machine against the hosted database: `DATABASE_URL=<neon url> FIELD_ENC_KEY=<same key as Render> python -m app.seed`. The key must match the one on Render or names will not decrypt.
 7. **Keep it awake.** Render's free backend sleeps after 15 minutes without traffic, and the first request after that takes about a minute. Add a free uptime monitor (UptimeRobot or cron-job.org) that calls `GET /health` on the backend every 10 minutes. `/health` also answers `HEAD`.
 
-Live link: _to be added after the first deploy_
+## Live demo
+
+- App: https://collections-copilot-web.onrender.com
+- API health check: https://collections-copilot-api.onrender.com/health
+- Logins: see section 4 (for example `manager_central` or `rahul`, password `demo123`).
+
+The backend is on Render's free plan, which sleeps after 15 minutes without traffic. A monitor calls `/health` every 10 minutes to keep it awake. If the first request is slow, wait about a minute and retry.
 
 ## 7. Notes for reviewers
 
