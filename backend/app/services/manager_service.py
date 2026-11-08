@@ -5,7 +5,6 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.domain.promise import next_state
 from app.domain.roll_rate import roll_rate
 from app.domain.scoring import band
 from app.models import Assignment, Loan, LoanSnapshot, Outcome, Promise, User
@@ -13,6 +12,7 @@ from app.schemas.manager import (
     ActivityRow, DashboardOut, ManagerLoanRow, OfficerStat, PromiseRow, RollRateOut,
 )
 from app.services.officer_service import _latest_scores
+from app.services.promise_service import sweep_due
 
 
 def dashboard(db: Session, manager: User) -> DashboardOut:
@@ -68,14 +68,8 @@ def promises(db: Session, manager: User, state: str | None) -> list[PromiseRow]:
 
 
 def sweep_promises(db: Session, manager: User, today: date) -> int:
-    """Open promises whose date has passed with no payment become broken."""
-    due = db.scalars(select(Promise).join(Loan, Loan.loan_id == Promise.loan_id)
-                     .where(Loan.branch_id == manager.branch_id, Promise.state == "open",
-                            Promise.promise_date < today)).all()
-    for p in due:
-        p.state = next_state(p.state, "broken")
-    db.commit()
-    return len(due)
+    """Manual button: the same sweep the background job runs, limited to the manager's branch."""
+    return sweep_due(db, today, branch_id=manager.branch_id)
 
 
 def activity(db: Session, manager: User, limit: int = 100) -> list[ActivityRow]:

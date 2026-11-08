@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-flash-latest"
     messaging_provider: str = "mock"
     cors_origins: str = "http://localhost:5173"
+    promise_sweep_minutes: int = 30  # 0 turns the background sweep off
 
     @field_validator("database_url")
     @classmethod

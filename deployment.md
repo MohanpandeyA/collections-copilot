@@ -48,6 +48,7 @@ Names only. Put the values in `backend/.env`, which is git ignored.
 | `GEMINI_MODEL` | no | Defaults to `gemini-flash-latest` |
 | `MESSAGING_PROVIDER` | no | `mock` (default). No real SMS or WhatsApp is sent. |
 | `CORS_ORIGINS` | yes | Comma separated list of frontend origins, for example `http://localhost:5173` |
+| `PROMISE_SWEEP_MINUTES` | no | How often the server marks promises past their date as broken. Default `30`; `0` turns it off |
 
 Generate the two secrets:
 
@@ -92,7 +93,7 @@ Quick tour: sign in as `manager_central` to see the dashboard, loans, promises, 
 ## 5. Tests
 
 ```bash
-cd backend && .venv/bin/python -m pytest        # 155 tests
+cd backend && .venv/bin/python -m pytest        # 162 tests
 cd frontend && npx vitest run                   # 78 tests
 cd frontend && npx tsc -b                       # type check
 ```
