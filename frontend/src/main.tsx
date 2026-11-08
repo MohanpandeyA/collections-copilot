@@ -4,7 +4,10 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./auth/AuthContext";
 import { I18nProvider } from "./i18n/useT";
+import { registerServiceWorker } from "./pwa";
 import "./styles/base.css";
+
+registerServiceWorker();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

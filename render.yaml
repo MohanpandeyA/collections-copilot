@@ -35,6 +35,14 @@ services:
         value: 20.11.0
       - key: VITE_API_URL
         sync: false
+    headers:
+      # The browser must re-check the worker on every visit, or a fixed one never reaches phones
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache
+      - path: /manifest.webmanifest
+        name: Cache-Control
+        value: no-cache
     routes:
       # Single page app: every path serves index.html so /officer and /manager reload correctly
       - type: rewrite

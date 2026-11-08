@@ -94,7 +94,7 @@ Quick tour: sign in as `manager_central` to see the dashboard, loans, promises, 
 
 ```bash
 cd backend && .venv/bin/python -m pytest        # 177 tests
-cd frontend && npx vitest run                   # 79 tests
+cd frontend && npx vitest run                   # 92 tests
 cd frontend && npx tsc -b                       # type check
 ```
 
@@ -126,3 +126,7 @@ The backend is on Render's free plan, which sleeps after 15 minutes without traf
 - The messaging gateway is mocked. A reminder is only ever sent after the officer taps send.
 - Outcomes logged offline are kept in the browser (IndexedDB) and sent when the connection returns. Each one carries a `client_id`, so a retry never creates a duplicate.
 - Offline loading of the app itself (service worker) is not built yet. It is listed under next steps in the TDD.
+
+## Offline app shell
+
+The frontend registers a service worker (`/sw.js`) in production builds. After one online visit the app opens with no signal, and visit logs wait in the phone's outbox until it is online again. Loan data is never cached by the worker: a stale balance is worse than an error. Each build gets its own cache, so a deploy refreshes the offline copy. On a phone, "Add to Home Screen" installs it with the icon in `frontend/public`.
