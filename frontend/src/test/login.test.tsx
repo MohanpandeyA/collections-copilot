@@ -57,6 +57,14 @@ describe("login", () => {
     expect(screen.getByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 
+  it("tells the user to wait when the server has locked the login", async () => {
+    mockFetch(() => json({ detail: "Too many failed attempts. Try again later." }, 429));
+    const user = userEvent.setup();
+    renderApp("/login");
+    await fillAndSubmit(user, "rahul", "nope");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many wrong attempts");
+  });
+
   it("shows an offline message when the server cannot be reached", async () => {
     vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new TypeError("Failed to fetch"))));
     const user = userEvent.setup();

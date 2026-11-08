@@ -33,9 +33,9 @@ app = FastAPI(title="Collections Copilot API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
+    allow_methods=["GET", "POST", "PUT", "HEAD", "OPTIONS"],  # what the app uses, nothing more
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 

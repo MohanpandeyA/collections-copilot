@@ -3,12 +3,19 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import seed
+from app.core.ratelimit import login_limiter
 from app.main import app
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _seeded_db():
     seed.main()
+
+
+@pytest.fixture(autouse=True)
+def _fresh_login_limiter():
+    login_limiter.reset()
+    yield
 
 
 @pytest.fixture()

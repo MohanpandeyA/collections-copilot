@@ -26,6 +26,7 @@ export default function Login() {
       navigate(next.role === "manager" ? "/manager" : "/officer", { replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) setError(t("badLogin"));
+      else if (err instanceof ApiError && err.status === 429) setError(t("tooManyLogins"));
       else if (err instanceof ApiError && err.status === 0) setError(t("offline"));
       else setError(t("serverError"));
     } finally {
